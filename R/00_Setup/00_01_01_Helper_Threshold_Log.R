@@ -64,12 +64,12 @@ make_logfile_path <- function(
 #   - entweder single value (gilt für alle)
 #   - oder named list pro Tabelle (names müssen zu tabs passen)
 #
-log_min_n3_many <- function(
+log_min_n_many <- function(
     tabs,
     n_col = "n",
     label_cols = NULL,
     logname = "threshold_min_n3",
-    min_n = 3, #TODO: Hier bitte Mindestanzahl bestätigen
+    min_n = threshhold_n, #TODO: Hier bitte Mindestanzahl bestätigen
     tz = "Europe/Berlin"
 ) {
   stopifnot(is.list(tabs), length(tabs) > 0)
