@@ -37,7 +37,8 @@ config <- list(
 
 # Ableitungen ------------------------------------------------------------
 
-setwd(config$paths$osp_wd)
+config$paths$current_wd <- config$paths$osp_wd
+setwd(config$paths$current_wd)
 #TODO: setwd(config$paths$ #TODO)
 
 

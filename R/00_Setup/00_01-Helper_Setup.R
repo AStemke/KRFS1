@@ -10,7 +10,7 @@
 # ------------------------------------------------------------------
 
 source_setup_helpers <- function(
-    current_wd,
+    current_wd = config$paths$current_wd,
     setup_subdir = file.path("R", "00_Setup"),
     prefix = "00_01_",
     verbose = FALSE,
@@ -53,10 +53,13 @@ source_setup_helpers <- function(
 
 # Logfiles for Threshold --------------------------------------------------
 
-stopifnot(exists("current_wd"))
+stopifnot(
+  !is.null(config$paths$current_wd)
+)
+
 
 source_setup_helpers(
-  current_wd = current_wd,
+  current_wd = config$paths$current_wd,
   setup_subdir = file.path("R", "00_Setup"),
   prefix = "00_01_",
   verbose = FALSE,

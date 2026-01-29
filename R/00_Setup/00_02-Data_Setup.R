@@ -10,7 +10,7 @@
 # )
 
 #Liest ADS ein, falls vorhangen, andernfalls erstellt es aus den Excel files ein ads
-ads_list <- load_ads(current_wd, productive = FALSE)
+ads_list <- load_ads(config$paths$current_wd, productive = FALSE)
 
 # # Distanz numeric?
 # str(ads_list$data$Distanz_km)

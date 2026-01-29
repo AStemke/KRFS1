@@ -8,7 +8,7 @@
 # ------------------------------------------------------------
 # Pfade initialisieren
 # ------------------------------------------------------------
-explore_init_paths <- function(current_wd) {
+explore_init_paths <- function(current_wd = config$paths$current_wd) {
   
   paths <- list(
     explore_base = file.path(current_wd, "output", "Explore"),
@@ -100,9 +100,9 @@ explore_write_figure <- function(plot,
                                  filename,
                                  paths,
                                  log_file,
-                                 width = fig_width,
-                                 height = fig_height,
-                                 dpi = fig_id) {
+                                 width = config$figures$width,
+                                 height = config$figures$height,
+                                 dpi = config$figures$dpi) {
   
   stopifnot(is.character(fig_id), length(fig_id) == 1)
   
@@ -125,3 +125,4 @@ explore_write_figure <- function(plot,
   
   invisible(list(png = png_path, pdf = pdf_path))
 }
+
