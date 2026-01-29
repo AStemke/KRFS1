@@ -5,8 +5,8 @@
 # ------------------------------------------------------------------
 # Source Setup-Helper (00_01_*.R) aus R/00_Setup
 # - generisch über current_wd
-# - Guard: genau 1x pro Session
 # - Reihenfolge über Dateinamen
+# - kein Guard (Änderungen werden bei erneutem Aufruf übernommen)
 # ------------------------------------------------------------------
 
 source_setup_helpers <- function(
@@ -14,17 +14,8 @@ source_setup_helpers <- function(
     setup_subdir = file.path("R", "00_Setup"),
     prefix = "00_01_",
     verbose = FALSE,
-    local = FALSE,
-    guard_name = ".setup_helpers_loaded"
+    local = FALSE
 ) {
-  # Guard
-  if (exists(guard_name, envir = .GlobalEnv, inherits = FALSE)) {
-    if (isTRUE(verbose)) {
-      message("Setup-Helper bereits geladen (Guard: ", guard_name, ").")
-    }
-    return(invisible(NULL))
-  }
-  
   stopifnot(
     is.character(current_wd),
     length(current_wd) == 1,
@@ -49,9 +40,6 @@ source_setup_helpers <- function(
   # stabile Reihenfolge: 00_01_01_..., 00_01_02_...
   files <- sort(files)
   
-  # Guard setzen (vor dem sourcen)
-  assign(guard_name, TRUE, envir = .GlobalEnv)
-  
   for (f in files) {
     if (isTRUE(verbose)) message("Sourcing: ", basename(f))
     source(f, local = local)
@@ -59,6 +47,7 @@ source_setup_helpers <- function(
   
   invisible(files)
 }
+
 
 
 # Logfiles for Threshold --------------------------------------------------
