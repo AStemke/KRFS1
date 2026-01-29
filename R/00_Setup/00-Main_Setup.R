@@ -4,28 +4,47 @@
 
 # Setup -------------------------------------------------------------------
 # Hier erfolgt das Sourcen der Überabschnitte, sowie die Definition globaler Variablen.
+# Zentrale Konfiguration
 
-## Working  Directory ----------------------------------------------------
+config <- list(
+ 
+  ## Working  Directory ----------------------------------------------------
+  #Bitte auf das entsprechende Arbeitsverzeichnis setzen
+  #TODO: Ihr wd (working directory) einsetzen und entsprechende Zuweisung vornehmen
+  paths = list(
+    osp_wd     = "T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1",
+    current_wd = NULL   # wird unten gesetzt
+  ),
+  
+  ## Dataset ---------------------------------------------------------------
+  # Für Dummy Datensatz FALSE, für Productive TRUE
+  data = list(
+    productive = FALSE
+  ),
+ 
+  ## n-Threshold ----------------------------------------------------------- 
+  thresholds = list(
+    n_min = 3
+  ),
+ 
+  ## figure settings ------------------------------------------------------- 
+  figures = list(
+    width  = 10,
+    height = 6,
+    dpi    = 300
+  )
+)
 
-#Bitte auf das entsprechende Arbeitsverzeichnis setzen
+# Ableitungen ------------------------------------------------------------
 
-osp_wd <- "T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1"
-#TODO: Ihr wd (working directory) einsetzen und entsprechende Zuweisung vornehmen
+setwd(config$paths$osp_wd)
+#TODO: setwd(config$paths$ #TODO)
 
-current_wd <- osp_wd
-setwd(current_wd)
-
-
-## Dataset ---------------------------------------------------------------
-# Für Dummy Datensatz FALSE, für Productive TRUE
-productive <- FALSE
-
-
-## n-Threshold -----------------------------------------------------------
-threshhold_n <- 3
 
 
 # Sourcen der auszuführenden Skripte --------------------------------------
 
-source(file.path("R", "00_00-Libraries.R"))
-source(file.path("R", "00_01-Setup_Helper.R"))
+source(file.path("R", "00_Setup", "00_00-Libraries.R"))
+source(file.path("R", "00_Setup", "00_01-Helper_Setup.R"))
+source(file.path("R", "00_Setup", "00_02-Data_Setup.R"))
+source(file.path("R", "01_Explore", "01_00-Explore_Setup.R"))

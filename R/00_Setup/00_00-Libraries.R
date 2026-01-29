@@ -26,8 +26,8 @@ load_pkgs <- function(pkgs, quietly = TRUE) {
 
 load_pkgs(c(
   "tidyverse",
-  "survival",
-  "mstate",
+  "tibble",
+  "ggplot2",
   "broom",
   "lubridate"
 ))

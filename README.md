@@ -37,6 +37,16 @@ analysis data set, mit diesem werden dann die Auswertungen durchgeführt,
 um Codierungsprobleme und anderes auszuschließen, sollte es sich dabei um ein
 RData Objekt handeln. 
 
+Damit das Prorgammreibungslos läuft, sollte das Bennennungsschema beibehalten 
+werden und diese in raw abgelegt werden, außerdem darf in dem Ordner nur jeweils
+eine xlsx dem Muster entsprechen
+Dummy_Datensatz_DATUM.xlsx
+Dummy_Datensatz_DATUM_Legende.xlsx
+in Dummy/raw und
+Productive_Datensatz_DATUM.xlsx
+Productive_Datensatz_DATUM_Legende.xlsx
+in Productive/raw
+
 ## docs
 Dieser Ordner beinhaltet Dokumente wir Präsentationen etc
 
