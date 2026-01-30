@@ -1,19 +1,17 @@
 # 01_01-Explore_Sourcing.R
 
-# Init --------------------------------------------------------------------
-paths <- explore_init_paths()        # default: config$paths$current_wd
-log_file <- explore_log_path(paths)
+# Init --------------------------------------------------------------
+paths <- tc_init_paths(scope = "Explore")
+log_file <- tc_log_path(paths)
 
-log_write(log_file, "INFO", "Explore started.")
-log_write(log_file, "INFO", "Explore base: ", paths$explore_base)
+log_write(log_file, "INFO", "Started scope: ", paths$scope)
+log_write(log_file, "INFO", "Output base: ", paths$output_base)
 
+# Daten --------------------------------------------------------------
 dat <- ads_list$data
-excel_tabs <- list()
-
-
+ctx <- list(paths = paths, log_file = log_file, excel_tabs = list())
 
 # Alle 01_01_ Auswertungen ------------------------------------------------
-
 source_setup_helpers(
   current_wd = config$paths$current_wd,
   setup_subdir = file.path("R", "01_Explore"),
@@ -22,13 +20,12 @@ source_setup_helpers(
   local = FALSE
 )
 
-
 # Excel -------------------------------------------------------------------
-explore_write_excel(
-  excel_list = excel_tabs,
-  paths = paths,
+tc_write_excel(
+  excel_list = ctx$excel_tabs,
+  paths = ctx$paths,
   filename = "Explore_Tables.xlsx",
-  log_file = log_file
+  log_file = ctx$log_file
 )
 
 log_write(log_file, "INFO", "Explore finished.")

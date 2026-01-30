@@ -1,0 +1,10 @@
+2026-01-30 01:50:32 [INFO] Started scope: Explore 
+2026-01-30 01:50:32 [INFO] Output base: T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1/output/Explore 
+2026-01-30 01:50:32 [INFO] Table written: 01_01_overview_dataset (rows=1, cols=8) 
+2026-01-30 01:50:32 [INFO] Table written: 01_02_variables_inventory (rows=47, cols=6) 
+2026-01-30 01:50:33 [INFO] Figure written: 01_03_missingness_missingness_bar -> T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1/output/Explore/figures 
+2026-01-30 01:50:34 [INFO] Table written: 01_04_check_mandatory_vars (rows=5, cols=4) 
+2026-01-30 01:50:34 [INFO] Table written: 01_05_gender_distribution (rows=2, cols=3) 
+2026-01-30 01:50:34 [INFO] Figure written: 01_05_gender_gender_bar -> T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1/output/Explore/figures 
+2026-01-30 01:50:34 [INFO] Excel workbook written: T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1/output/Explore/tables/Explore_Tables.xlsx 
+2026-01-30 01:50:34 [INFO] Explore finished. 

@@ -18,7 +18,18 @@ config <- list(
   
   ## n-Threshold ----------------------------------------------------------- 
   thresholds = list(
-    n_min = 3
+    n_min = 3,
+    
+    # Auto-Detection: nur Spalten, die wie Zählspalten aussehen
+    # Empfehlung: Namenskonvention "n", "n_*", "N", "N_*"
+    auto_regex = "^(n|N)",
+    
+    # Auto-Detection: nur ganzzahlige Werte (keine Nachkommastellen)
+    auto_require_integerish = TRUE,
+    
+    # Auto-Detection: Ausschlussliste, falls es numerische "n-ähnliche" Spalten gibt,
+    # die KEINE Fallzahlen sind
+    auto_exclude = character(0)
   ),
   
   ## figure settings ------------------------------------------------------- 
