@@ -11,7 +11,7 @@ config <- list(
   ),
   
   ## Dataset ---------------------------------------------------------------
-  # Für Dummy Datensatz FALSE, für Productive TRUE
+  #TODO: Für Dummy Datensatz FALSE, für Productive TRUE
   data = list(
     productive = FALSE
   ),
