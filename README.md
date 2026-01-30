@@ -1,6 +1,32 @@
 # KRFS1
 Wohnohrtnahe Versorgung in der Metropolregion Stuttgart
 
+# Version
+Die Idee der Versionierung:
+X-Y-Z
+
+X ist ein Major Release, und ist eine Version bei der weitreichende 
+Funktionialitäten verändert worden sind, sobald X=1 geteilt wurde.
+
+Y enthält grundlegende Veränderungen in znetralen Funktionen, oder Überarbeitungen
+nach Rücksprache. Oft verwendet bei einem Merge auf Main.
+
+Z ist für jedwede nennenswerte Änderungen im Entwicklungsprozess, spätestens sobald eine
+neue Version geteilt wurde, sei es auch nur ein neuer Kommentar. 
+Häufig verwendet, für bspw. Veränderungen auf einem Branch.
+
+## 0-0-1 First release
+Diese Version hat inhaltlich noch wenig Relevanz, sie dient eher der gemeinsamen 
+Kommunikation, wie das gemeinsame Arbeiten mit dem Code und an den Daten stattfindet.
+
+Bekannte Bugs:
+Threshold Funktion (00_01_01_Helper_Threshold_Log) funktioniert noch nicht 
+wie intendiert, hier besteht auch noch Klärungsbedarf.
+
+## History
+### Keine
+
+# Projektverzeichnis
 Die Ordnerstrukur ist wie folgt aufgebaut:
 
 KRFS1
