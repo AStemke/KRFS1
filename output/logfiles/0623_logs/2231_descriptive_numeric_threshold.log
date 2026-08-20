@@ -1,4 +1,0 @@
-[2026-06-23 22:31:07] [WARN] Output unterdrueckt (Kriterium: 0 < n < min_n). object=05_02_distance_by_uicc_summary, min_n=3, mode=any, n_cols=[n]
-[2026-06-23 22:31:07] [WARN] object=05_02_distance_by_uicc_summary | uicc=IA2 | n=1 (min_n=3)
-[2026-06-23 22:31:07] [WARN] object=05_02_distance_by_uicc_summary | uicc=IC | n=1 (min_n=3)
-[2026-06-23 22:31:07] [WARN] object=05_02_distance_by_uicc_summary | uicc=IIC | n=1 (min_n=3)

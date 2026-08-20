@@ -1,9 +1,0 @@
-2026-06-23 22:31:07 [INFO] Started scope: Stats 
-2026-06-23 22:31:07 [INFO] Table written: 05_01_nearcare_by_sex_crosstab (rows=4, cols=3) 
-2026-06-23 22:31:07 [INFO] Table written: 05_01_nearcare_by_sex_test (rows=1, cols=5) 
-2026-06-23 22:31:07 [WARN] Output suppressed: 05_02_distance_by_uicc_summary | Datenschutz-Threshold verletzt: 0 < n < 3 
-2026-06-23 22:31:07 [INFO] Table written: 05_03_nearcare_model_counts (rows=1, cols=4) 
-2026-06-23 22:31:07 [WARN] Output suppressed: 05_03_nearcare_model_level_counts | Datenschutz-Threshold verletzt: 0 < n < 3 
-2026-06-23 22:31:07 [WARN] Output suppressed: 05_03_nearcare_model_or | Modell nicht ausgegeben: Modellframe/Events/Level nicht safe oder Outcome hat nur eine Auspraegung. 
-2026-06-23 22:31:07 [INFO] Excel workbook written: T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1/output/Stats/tables/Stats_Tables.xlsx 
-2026-06-23 22:31:07 [INFO] Stats finished. 
