@@ -3,7 +3,8 @@
 # - Einheitliche Output-Logik mit Datenschutz-Threshold
 # - Tabellen: CSV + RDS + Excel-Sammelmappe
 # - Grafiken: PNG + PDF
-# - Unterdrueckte Outputs werden in ctx$suppressed dokumentiert
+# - Tabellen mit einzelnen kritischen Gruppen werden gruppenweise mit NA maskiert
+# - Vollstaendig nicht pruefbare Outputs werden weiterhin unterdrueckt und in ctx$suppressed dokumentiert
 
 # Pfade initialisieren -----------
 tc_init_paths <- function(scope, current_wd = config$paths$current_wd) {
@@ -118,25 +119,43 @@ tc_write_table <- function(
     threshold_object_name = table_id
 ) {
   stopifnot(is.data.frame(tab))
+  
+  tab_out <- tab
   ok <- TRUE
+  masked_rows <- integer(0)
+  
   if (isTRUE(threshold)) {
-    ok <- passes_threshold_category(
+    threshold_result <- mask_threshold_category(
       tab = tab,
       output_category = output_category,
       n_col = threshold_n_col,
       label_cols = threshold_label_cols,
       object_name = threshold_object_name
     )
+    tab_out <- threshold_result$tab
+    ok <- threshold_result$ok
+    masked_rows <- threshold_result$masked_rows
   }
   
   if (isTRUE(ok)) {
-    ctx$excel_tabs <- tc_save_table(tab, table_id, ctx$paths, ctx$excel_tabs, ctx$log_file)
+    ctx$excel_tabs <- tc_save_table(tab_out, table_id, ctx$paths, ctx$excel_tabs, ctx$log_file)
+    if (length(masked_rows) > 0) {
+      log_write(
+        ctx$log_file,
+        "WARN",
+        "Threshold rows masked with NA: ",
+        table_id,
+        " (rows=",
+        paste(masked_rows, collapse = ","),
+        ")"
+      )
+    }
   } else {
     ctx <- tc_add_suppressed(
       ctx = ctx,
       object_id = table_id,
       output_category = output_category,
-      reason = paste0("Datenschutz-Threshold verletzt: 0 < n < ", config$thresholds$n_min)
+      reason = "Datenschutz-Threshold nicht pruefbar: keine passende Fallzahlspalte gefunden."
     )
   }
   ctx
@@ -154,6 +173,8 @@ tc_save_figure <- function(plot, fig_id, filename, paths, log_file, width = conf
 }
 
 # Grafik mit Threshold schreiben -----------
+# Hinweis: Der Plot muss bereits auf einer maskierten Datengrundlage erzeugt sein,
+# wenn einzelne unsichere Gruppen als NA erscheinen sollen.
 tc_write_figure <- function(
     plot,
     fig_id,

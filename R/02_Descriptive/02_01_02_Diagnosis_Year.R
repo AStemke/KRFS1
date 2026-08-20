@@ -23,7 +23,16 @@ ctx <- tc_write_table(
   threshold_label_cols = c("diagnosis_year")
 )
 
-p_year <- ggplot2::ggplot(year_tab, ggplot2::aes(x = diagnosis_year, y = n_tumors)) +
+# Threshold fuer Grafik -----------
+year_plot_tab <- mask_threshold_category(
+  tab = year_tab,
+  output_category = "aggregate_figure",
+  n_col = c("n_tumors", "n_patients"),
+  label_cols = c("diagnosis_year"),
+  object_name = "02_02_diagnosis_year_bar"
+)$tab
+
+p_year <- ggplot2::ggplot(year_plot_tab, ggplot2::aes(x = diagnosis_year, y = n_tumors)) +
   ggplot2::geom_col() +
   ggplot2::labs(title = "Tumoren nach Diagnosejahr", x = "Diagnosejahr", y = "Anzahl Tumoren") +
   ggplot2::theme_minimal()
@@ -33,7 +42,7 @@ ctx <- tc_write_figure(
   fig_id = "02_02_diagnosis_year",
   filename = "bar",
   ctx = ctx,
-  threshold_tab = year_tab,
+  threshold_tab = year_plot_tab,
   output_category = "aggregate_figure",
   threshold_n_col = c("n_tumors", "n_patients"),
   threshold_label_cols = c("diagnosis_year")
