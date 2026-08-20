@@ -3,6 +3,7 @@
 # - Datenschutz-Threshold fuer Tabellen, Grafiken, Karten, Tests und Modelle
 # - Regel: Jede ausgegebene Zellfallzahl muss entweder 0 oder >= min_n sein
 # - Kritisch ist: 0 < n < min_n
+# - Tabellen koennen kritische Gruppen zeilenweise mit NA maskieren.
 # - Konservatives Verhalten: Wenn eine pruefpflichtige Ausgabe keine Fallzahlspalte besitzt,
 #   wird sie unterdrueckt und geloggt.
 
@@ -163,6 +164,129 @@ passes_threshold_n_min <- function(
   FALSE
 }
 
+# Threshold-Maskierung -----------
+## Kritische Gruppen zeilenweise mit NA maskieren -----------
+mask_threshold_n_min <- function(
+    tab,
+    n_col = "auto",
+    label_cols = NULL,
+    object_name = "object",
+    min_n = config$thresholds$n_min,
+    mode = c("any", "all"),
+    require_count_cols = FALSE,
+    logname = "threshold_n_min",
+    base_dir = file.path(config$paths$current_wd, "output", "logfiles"),
+    tz = "Europe/Berlin",
+    write_log = TRUE
+) {
+  mode <- match.arg(mode)
+  stopifnot(is.data.frame(tab))
+  stopifnot(is.character(object_name), length(object_name) == 1, nzchar(object_name))
+  stopifnot(is.numeric(min_n), length(min_n) == 1, !is.na(min_n), min_n > 0)
+  
+  n_cols <- .resolve_n_cols(tab, n_col = n_col)
+  
+  if (length(n_cols) == 0) {
+    if (isTRUE(require_count_cols) && isTRUE(write_log)) {
+      threshold_log_write(
+        lines = paste0(
+          "[WARN] Output nicht maskierbar: keine pruefbare Fallzahlspalte gefunden. object=",
+          object_name, ", n_col=", paste(n_col, collapse = ",")
+        ),
+        logname = logname,
+        base_dir = base_dir,
+        tz = tz
+      )
+    }
+    return(list(
+      tab = tab,
+      ok = !isTRUE(require_count_cols),
+      masked_rows = integer(0),
+      n_cols = character(0),
+      label_cols = character(0)
+    ))
+  }
+  
+  if (is.null(label_cols)) {
+    label_cols <- head(setdiff(names(tab), n_cols), 6)
+  } else {
+    label_cols <- intersect(label_cols, names(tab))
+  }
+  
+  bad_matrix <- matrix(
+    FALSE,
+    nrow = nrow(tab),
+    ncol = length(n_cols),
+    dimnames = list(NULL, n_cols)
+  )
+  
+  for (j in seq_along(n_cols)) {
+    n_vec <- tab[[n_cols[[j]]]]
+    bad_matrix[, j] <- !is.na(n_vec) & n_vec > 0 & n_vec < min_n
+  }
+  
+  bad_rows <- if (mode == "any") {
+    rowSums(bad_matrix) > 0
+  } else {
+    rowSums(bad_matrix) == length(n_cols)
+  }
+  bad_idx <- which(bad_rows)
+  
+  if (length(bad_idx) == 0) {
+    return(list(
+      tab = tab,
+      ok = TRUE,
+      masked_rows = integer(0),
+      n_cols = n_cols,
+      label_cols = label_cols
+    ))
+  }
+  
+  masked_tab <- tab
+  mask_cols <- setdiff(names(masked_tab), label_cols)
+  for (col in mask_cols) {
+    masked_tab[[col]][bad_idx] <- NA
+  }
+  
+  if (isTRUE(write_log)) {
+    lines_all <- vapply(bad_idx, function(i) {
+      labels <- if (length(label_cols) > 0) {
+        paste(paste0(label_cols, "=", as.character(tab[i, label_cols, drop = TRUE])), collapse = "; ")
+      } else {
+        paste0("row=", i)
+      }
+      bad_cols_i <- n_cols[bad_matrix[i, ]]
+      bad_values <- paste(
+        paste0(bad_cols_i, "=", vapply(bad_cols_i, function(col) as.character(tab[[col]][i]), character(1))),
+        collapse = "; "
+      )
+      sprintf(
+        "[WARN] object=%s | %s | maskiert: %s (min_n=%d)",
+        object_name, labels, bad_values, as.integer(min_n)
+      )
+    }, character(1))
+    
+    header <- sprintf(
+      "[WARN] Gruppen mit NA maskiert (Kriterium: 0 < n < min_n). object=%s, min_n=%d, mode=%s, n_cols=[%s], rows=%d",
+      object_name, as.integer(min_n), mode, paste(n_cols, collapse = ", "), length(bad_idx)
+    )
+    threshold_log_write(
+      lines = c(header, lines_all),
+      logname = logname,
+      base_dir = base_dir,
+      tz = tz
+    )
+  }
+  
+  list(
+    tab = masked_tab,
+    ok = TRUE,
+    masked_rows = bad_idx,
+    n_cols = n_cols,
+    label_cols = label_cols
+  )
+}
+
 # Kategorie-Policy holen -----------
 get_output_policy <- function(output_category) {
   stopifnot(is.character(output_category), length(output_category) == 1, nzchar(output_category))
@@ -190,6 +314,44 @@ passes_threshold_category <- function(
   mode <- if (!is.null(policy$mode)) policy$mode else "any"
   
   passes_threshold_n_min(
+    tab = tab,
+    n_col = n_col,
+    label_cols = label_cols,
+    object_name = object_name,
+    min_n = config$thresholds$n_min,
+    mode = mode,
+    require_count_cols = TRUE,
+    logname = logname,
+    base_dir = file.path(config$paths$current_wd, "output", "logfiles"),
+    write_log = write_log
+  )
+}
+
+# Threshold nach Output-Kategorie maskieren -----------
+mask_threshold_category <- function(
+    tab,
+    output_category,
+    n_col = NULL,
+    label_cols = NULL,
+    object_name = "object",
+    logname = paste0(output_category, "_threshold"),
+    write_log = TRUE
+) {
+  policy <- get_output_policy(output_category)
+  if (!isTRUE(policy$threshold)) {
+    return(list(
+      tab = tab,
+      ok = TRUE,
+      masked_rows = integer(0),
+      n_cols = character(0),
+      label_cols = character(0)
+    ))
+  }
+  
+  if (is.null(n_col)) n_col <- policy$n_col
+  mode <- if (!is.null(policy$mode)) policy$mode else "any"
+  
+  mask_threshold_n_min(
     tab = tab,
     n_col = n_col,
     label_cols = label_cols,
