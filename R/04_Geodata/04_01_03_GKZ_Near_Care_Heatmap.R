@@ -54,21 +54,26 @@ if (config$analysis$active_output_group %in% heatmap_groups) {
       tab_key = "gkz_diagnose"
     )
 
-    p_near_care_heatmap <- plot_choropleth(
-      sf_obj = gkz_near_care_map,
-      fill_var = "share_near",
-      title = paste0(
-        "Anteil wohnortnaher Versorgung nach Gemeinde - ",
-        config$analysis$active_output_group
-      )
-    ) +
+    p_near_care_heatmap <- ggplot2::ggplot(gkz_near_care_map) +
+      ggplot2::geom_sf(
+        ggplot2::aes(fill = share_near),
+        color = NA
+      ) +
+      ggplot2::coord_sf(datum = NA) +
       ggplot2::scale_fill_viridis_c(
         option = "C",
         limits = c(0, 1),
         labels = scales::label_percent(accuracy = 1),
         na.value = "grey90",
         name = "Anteil wohnortnah"
-      )
+      ) +
+      ggplot2::labs(
+        title = paste0(
+          "Anteil wohnortnaher Versorgung nach Gemeinde - ",
+          config$analysis$active_output_group
+        )
+      ) +
+      ggplot2::theme_minimal()
 
     ctx <- tc_write_figure(
       plot = p_near_care_heatmap,
