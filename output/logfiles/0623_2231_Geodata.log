@@ -1,0 +1,6 @@
+2026-06-23 22:31:07 [INFO] Started scope: Geodata 
+2026-06-23 22:31:07 [WARN] Geodaten nicht gefunden: T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1/data/geodata/gemeinden.gpkg 
+2026-06-23 22:31:07 [WARN] Output suppressed: 04_01_gkz_diagnosis_aggregate | Datenschutz-Threshold verletzt: 0 < n < 3 
+2026-06-23 22:31:07 [INFO] Table written: 04_02_geodata_status (rows=1, cols=3) 
+2026-06-23 22:31:07 [INFO] Excel workbook written: T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1/output/Geodata/tables/Geodata_Tables.xlsx 
+2026-06-23 22:31:07 [INFO] Geodata finished. 
