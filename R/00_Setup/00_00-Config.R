@@ -136,9 +136,9 @@ config <- list(
     diagnosis_year_max = NULL,
     icd10_prefix_keep = NULL,
 
-    # Selektive Gesamtpopulation gemaess aktueller Arbeitsdefinition.
+    # Selektive Gesamtpopulation gemaess Projektbeschreibung.
     project_icd10_3 = c(
-      "C18", "C25", "C50", "C56", "C61", "C81",
+      "C18", "C19", "C20", "C25", "C50", "C56", "C61", "C81",
       paste0("C", 82:88),
       "C90",
       paste0("C", 91:95)
