@@ -27,7 +27,16 @@ ctx <- tc_write_table(
   threshold_label_cols = c("age_group", "sex")
 )
 
-p_demo <- ggplot2::ggplot(demo_tab, ggplot2::aes(x = age_group, y = n_tumors, fill = sex)) +
+# Threshold fuer Grafik -----------
+demo_plot_tab <- mask_threshold_category(
+  tab = demo_tab,
+  output_category = "aggregate_figure",
+  n_col = c("n_tumors", "n_patients"),
+  label_cols = c("age_group", "sex"),
+  object_name = "02_03_age_sex_stacked_bar"
+)$tab
+
+p_demo <- ggplot2::ggplot(demo_plot_tab, ggplot2::aes(x = age_group, y = n_tumors, fill = sex)) +
   ggplot2::geom_col(position = "stack") +
   ggplot2::labs(title = "Tumoren nach Altersgruppe und Geschlecht", x = "Altersgruppe", y = "Anzahl Tumoren", fill = "Geschlecht") +
   ggplot2::theme_minimal() +
@@ -38,7 +47,7 @@ ctx <- tc_write_figure(
   fig_id = "02_03_age_sex",
   filename = "stacked_bar",
   ctx = ctx,
-  threshold_tab = demo_tab,
+  threshold_tab = demo_plot_tab,
   output_category = "aggregate_figure",
   threshold_n_col = c("n_tumors", "n_patients"),
   threshold_label_cols = c("age_group", "sex")
