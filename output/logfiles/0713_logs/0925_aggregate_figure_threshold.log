@@ -1,0 +1,11 @@
+[2026-07-13 09:25:35] [WARN] Output unterdrueckt (Kriterium: 0 < n < min_n). object=02_03_age_sex_stacked_bar, min_n=3, mode=any, n_cols=[n_tumors, n_patients]
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=1; sex=weiblich | n_tumors=1 (min_n=3)
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=4; sex=maennlich | n_tumors=2 (min_n=3)
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=5; sex=maennlich | n_tumors=1 (min_n=3)
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=16; sex=weiblich | n_tumors=2 (min_n=3)
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=17; sex=maennlich | n_tumors=1 (min_n=3)
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=1; sex=weiblich | n_patients=1 (min_n=3)
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=4; sex=maennlich | n_patients=2 (min_n=3)
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=5; sex=maennlich | n_patients=1 (min_n=3)
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=16; sex=weiblich | n_patients=1 (min_n=3)
+[2026-07-13 09:25:35] [WARN] object=02_03_age_sex_stacked_bar | age_group=17; sex=maennlich | n_patients=1 (min_n=3)

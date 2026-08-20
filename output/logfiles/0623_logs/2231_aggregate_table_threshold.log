@@ -1,0 +1,7 @@
+[2026-06-23 22:31:06] [WARN] Output unterdrueckt (Kriterium: 0 < n < min_n). object=02_04_uicc, min_n=3, mode=any, n_cols=[n_tumors, n_patients]
+[2026-06-23 22:31:06] [WARN] object=02_04_uicc | uicc=IA2 | n_tumors=1 (min_n=3)
+[2026-06-23 22:31:06] [WARN] object=02_04_uicc | uicc=IC | n_tumors=1 (min_n=3)
+[2026-06-23 22:31:06] [WARN] object=02_04_uicc | uicc=IIC | n_tumors=1 (min_n=3)
+[2026-06-23 22:31:06] [WARN] object=02_04_uicc | uicc=IA2 | n_patients=1 (min_n=3)
+[2026-06-23 22:31:06] [WARN] object=02_04_uicc | uicc=IC | n_patients=1 (min_n=3)
+[2026-06-23 22:31:06] [WARN] object=02_04_uicc | uicc=IIC | n_patients=1 (min_n=3)

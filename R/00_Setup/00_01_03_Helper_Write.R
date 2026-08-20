@@ -1,261 +1,192 @@
-# 00_01_03_Helper_Write
-#tc steht hier für threshhold check und ist so angelegt, damit es nicht mit
-# write.table o.ä. später verwechselt wird
+# 00_01_03_Helper_Write.R -----------
+# Zweck:
+# - Einheitliche Output-Logik mit Datenschutz-Threshold
+# - Tabellen: CSV + RDS + Excel-Sammelmappe
+# - Grafiken: PNG + PDF
+# - Unterdrueckte Outputs werden in ctx$suppressed dokumentiert
 
-# Pfade initialisieren --------------------------------------------------
-tc_init_paths <- function(
-    scope = "Explore",
-    current_wd = config$paths$current_wd
-) {
+# Pfade initialisieren -----------
+tc_init_paths <- function(scope, current_wd = config$paths$current_wd) {
   stopifnot(is.character(scope), length(scope) == 1, nzchar(scope))
-  
   base <- file.path(current_wd, "output", scope)
-  
   paths <- list(
-    scope       = scope,
+    scope = scope,
     output_base = base,
-    tables      = file.path(base, "tables"),
-    figures     = file.path(base, "figures"),
-    logfiles    = file.path(current_wd, "output", "logfiles")
+    tables = file.path(base, "tables"),
+    figures = file.path(base, "figures"),
+    rds = file.path(base, "rds"),
+    logfiles = file.path(current_wd, "output", "logfiles")
   )
-  
-  for (p in paths[c("output_base", "tables", "figures", "logfiles")]) {
-    dir.create(p, recursive = TRUE, showWarnings = FALSE)
-  }
-  
+  path_names <- c("output_base", "tables", "figures", "rds", "logfiles")
+  for (p in paths[path_names]) dir.create(p, recursive = TRUE, showWarnings = FALSE)
   paths
 }
 
-# Logfile-Pfad (scope-basiert, mit Zeitstempel)---------------------------
-# Zweck:
-# - Erstellt einen Logfile-Pfad unter output/logfiles/
-# - Dateiname enthält Datum (MMDD), Uhrzeit (HHMM) und Scope
-#
-# Beispiel:
-#   output/logfiles/0130_1427_Explore.log
-#
-tc_log_path <- function(
-    paths,
-    time = Sys.time(),
-    tz = "Europe/Berlin"
-) {
-  stopifnot(is.list(paths))
-  stopifnot("logfiles" %in% names(paths))
-  stopifnot("scope" %in% names(paths))
-  stopifnot(is.character(paths$logfiles), length(paths$logfiles) == 1)
-  stopifnot(is.character(paths$scope), length(paths$scope) == 1)
-  
-  # Zeitstempel zerlegen
+# Logfile-Pfad -----------
+tc_log_path <- function(paths, time = Sys.time(), tz = "Europe/Berlin") {
   t <- as.POSIXlt(time, tz = tz)
-  mmdd <- sprintf("%02d%02d", t$mon + 1, t$mday)   # MonatTag
-  hhmm <- sprintf("%02d%02d", t$hour, t$min)       # StundeMinute
-  
-  # Scope dateisystem-sicher machen
+  mmdd <- sprintf("%02d%02d", t$mon + 1, t$mday)
+  hhmm <- sprintf("%02d%02d", t$hour, t$min)
   scope <- gsub("[^A-Za-z0-9._-]+", "_", paths$scope)
-  
-  # Sicherstellen, dass Log-Verzeichnis existiert
-  dir.create(paths$logfiles, recursive = TRUE, showWarnings = FALSE)
-  
-  file.path(
-    paths$logfiles,
-    paste0(mmdd, "_", hhmm, "_", scope, ".log")
+  file.path(paths$logfiles, paste0(mmdd, "_", hhmm, "_", scope, ".log"))
+}
+
+# Log schreiben -----------
+log_write <- function(log_file, level = "INFO", ...) {
+  msg <- paste0(
+    format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
+    " [", level, "] ",
+    paste0(..., collapse = "")
+  )
+  cat(msg, "\n", file = log_file, append = TRUE)
+  message(msg)
+  invisible(msg)
+}
+
+# Kontext initialisieren -----------
+tc_init_ctx <- function(scope) {
+  paths <- tc_init_paths(scope = scope)
+  log_file <- tc_log_path(paths)
+  log_write(log_file, "INFO", "Started scope: ", scope)
+  list(
+    paths = paths,
+    log_file = log_file,
+    excel_tabs = list(),
+    suppressed = data.frame(
+      object_id = character(0),
+      output_category = character(0),
+      reason = character(0),
+      stringsAsFactors = FALSE
+    )
   )
 }
 
-
-# Grafiken speichern ------------------------------------------------------
-tc_save_figure <- function(
-    plot,
-    fig_id,
-    filename,
-    paths,
-    log_file,
-    width = config$figures$width,
-    height = config$figures$height,
-    dpi = config$figures$dpi
-) {
-  stopifnot(is.character(fig_id), length(fig_id) == 1, nzchar(fig_id))
-  stopifnot(is.character(filename), length(filename) == 1, nzchar(filename))
-  stopifnot(is.list(paths), "figures" %in% names(paths))
-  
-  fig_dir <- paths$figures
-  dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
-  
-  if (!dir.exists(fig_dir)) {
-    stop("Figures directory does not exist and could not be created: ", fig_dir)
-  }
-  
-  stem <- paste0(fig_id, "_", filename)
-  png_path <- file.path(fig_dir, paste0(stem, ".png"))
-  pdf_path <- file.path(fig_dir, paste0(stem, ".pdf"))
-  
-  ggplot2::ggsave(
-    filename = png_path,
-    plot = plot,
-    width = width,
-    height = height,
-    dpi = dpi,
-    create.dir = TRUE
+# Unterdrueckung dokumentieren -----------
+tc_add_suppressed <- function(ctx, object_id, output_category, reason) {
+  ctx$suppressed <- rbind(
+    ctx$suppressed,
+    data.frame(
+      object_id = object_id,
+      output_category = output_category,
+      reason = reason,
+      stringsAsFactors = FALSE
+    )
   )
-  
-  ggplot2::ggsave(
-    filename = pdf_path,
-    plot = plot,
-    width = width,
-    height = height,
-    create.dir = TRUE
-  )
-  
-  log_write(log_file, "INFO", "Figure written: ", stem, " -> ", fig_dir)
-  
-  invisible(list(png = png_path, pdf = pdf_path))
+  log_write(ctx$log_file, "WARN", "Output suppressed: ", object_id, " | ", reason)
+  ctx
 }
 
-
-# Table speichern (csv + rds + Excel-Collector) ------------------------
-tc_save_table <- function(
-    tab,
-    table_id,
-    paths,
-    excel_list,
-    log_file
-) {
+# Tabelle speichern -----------
+tc_save_table <- function(tab, table_id, paths, excel_list, log_file) {
   stopifnot(is.data.frame(tab))
-  stopifnot(is.character(table_id), length(table_id) == 1, nzchar(table_id))
-  
   csv_path <- file.path(paths$tables, paste0(table_id, ".csv"))
-  rds_path <- file.path(paths$tables, paste0(table_id, ".rds"))
-  
+  rds_path <- file.path(paths$rds, paste0(table_id, ".rds"))
   readr::write_csv(tab, file = csv_path, na = "")
   saveRDS(tab, file = rds_path)
-  
   excel_list[[table_id]] <- tab
-  
-  log_write(log_file, "INFO", "Table written: ", table_id,
-            " (rows=", nrow(tab), ", cols=", ncol(tab), ")")
-  
+  log_write(log_file, "INFO", "Table written: ", table_id, " (rows=", nrow(tab), ", cols=", ncol(tab), ")")
   excel_list
 }
 
-
-tc_write_excel <- function(
-    excel_list,
-    paths,
-    filename = "Tables.xlsx",
-    log_file = NULL
-) {
-  xlsx_path <- file.path(paths$tables, filename)
-  writexl::write_xlsx(excel_list, path = xlsx_path)
-  
-  if (!is.null(log_file)) {
-    log_write(log_file, "INFO", "Excel workbook written: ", xlsx_path)
+# Excel-Sammelmappe schreiben -----------
+tc_write_excel <- function(ctx, filename = paste0(ctx$paths$scope, "_Tables.xlsx")) {
+  excel_list <- ctx$excel_tabs
+  if (nrow(ctx$suppressed) > 0) {
+    excel_list[["suppressed_outputs"]] <- ctx$suppressed
   }
-  
-  xlsx_path
+  if (length(excel_list) == 0) {
+    excel_list[["output_info"]] <- data.frame(
+      info = "Keine Tabellen erzeugt oder alle Outputs unterdrueckt.",
+      stringsAsFactors = FALSE
+    )
+  }
+  xlsx_path <- file.path(ctx$paths$tables, filename)
+  writexl::write_xlsx(excel_list, path = xlsx_path)
+  log_write(ctx$log_file, "INFO", "Excel workbook written: ", xlsx_path)
+  invisible(xlsx_path)
 }
 
-
-# tc_write_table ----------------------------------------------------------
-
+# Tabelle mit Threshold schreiben -----------
 tc_write_table <- function(
     tab,
     table_id,
     ctx,
+    output_category = "aggregate_table",
     threshold = TRUE,
-    threshold_n_col = "auto",
+    threshold_n_col = NULL,
     threshold_label_cols = NULL,
-    threshold_object_name = table_id,
-    threshold_logname = "threshold_n_min"
+    threshold_object_name = table_id
 ) {
-  stopifnot(is.list(ctx), all(c("paths", "log_file", "excel_tabs") %in% names(ctx)))
-  
+  stopifnot(is.data.frame(tab))
   ok <- TRUE
-  
   if (isTRUE(threshold)) {
-    ok <- passes_threshold_n_min(
+    ok <- passes_threshold_category(
       tab = tab,
+      output_category = output_category,
       n_col = threshold_n_col,
       label_cols = threshold_label_cols,
-      object_name = threshold_object_name,
-      min_n = config$thresholds$n_min,
-      mode = "any",
-      logname = threshold_logname,
-      base_dir = file.path(config$paths$current_wd, "output", "logfiles")
+      object_name = threshold_object_name
     )
   }
   
   if (isTRUE(ok)) {
-    ctx$excel_tabs <- tc_save_table(
-      tab = tab,
-      table_id = table_id,
-      paths = ctx$paths,
-      excel_list = ctx$excel_tabs,
-      log_file = ctx$log_file
-    )
+    ctx$excel_tabs <- tc_save_table(tab, table_id, ctx$paths, ctx$excel_tabs, ctx$log_file)
   } else {
-    log_write(
-      ctx$log_file,
-      "WARN",
-      "Output suppressed for table ", table_id, " (0 < n < n_min). ",
-      "See threshold logfile in output/logfiles."
+    ctx <- tc_add_suppressed(
+      ctx = ctx,
+      object_id = table_id,
+      output_category = output_category,
+      reason = paste0("Datenschutz-Threshold verletzt: 0 < n < ", config$thresholds$n_min)
     )
   }
-  
   ctx
 }
 
+# Grafik speichern -----------
+tc_save_figure <- function(plot, fig_id, filename, paths, log_file, width = config$figures$width, height = config$figures$height, dpi = config$figures$dpi) {
+  stem <- paste0(fig_id, "_", filename)
+  png_path <- file.path(paths$figures, paste0(stem, ".png"))
+  pdf_path <- file.path(paths$figures, paste0(stem, ".pdf"))
+  ggplot2::ggsave(filename = png_path, plot = plot, width = width, height = height, dpi = dpi)
+  ggplot2::ggsave(filename = pdf_path, plot = plot, width = width, height = height)
+  log_write(log_file, "INFO", "Figure written: ", stem)
+  invisible(list(png = png_path, pdf = pdf_path))
+}
 
-# tc_write_figure ---------------------------------------------------------
-
+# Grafik mit Threshold schreiben -----------
 tc_write_figure <- function(
     plot,
     fig_id,
     filename,
     ctx,
+    threshold_tab,
+    output_category = "aggregate_figure",
     threshold = TRUE,
-    threshold_tab = NULL,
-    threshold_n_col = "auto",
+    threshold_n_col = NULL,
     threshold_label_cols = NULL,
-    threshold_object_name = paste0(fig_id, "_", filename),
-    threshold_logname = "threshold_n_min"
+    threshold_object_name = paste0(fig_id, "_", filename)
 ) {
-  stopifnot(is.list(ctx), all(c("paths", "log_file") %in% names(ctx)))
-  
+  stopifnot(is.data.frame(threshold_tab))
   ok <- TRUE
-  
   if (isTRUE(threshold)) {
-    stopifnot(is.data.frame(threshold_tab))
-    
-    ok <- passes_threshold_n_min(
+    ok <- passes_threshold_category(
       tab = threshold_tab,
+      output_category = output_category,
       n_col = threshold_n_col,
       label_cols = threshold_label_cols,
-      object_name = threshold_object_name,
-      min_n = config$thresholds$n_min,
-      mode = "any",
-      logname = threshold_logname,
-      base_dir = file.path(config$paths$current_wd, "output", "logfiles")
+      object_name = threshold_object_name
     )
   }
   
   if (isTRUE(ok)) {
-    tc_save_figure(
-      plot = plot,
-      fig_id = fig_id,
-      filename = filename,
-      paths = ctx$paths,
-      log_file = ctx$log_file
-    )
+    tc_save_figure(plot, fig_id, filename, ctx$paths, ctx$log_file)
   } else {
-    log_write(
-      ctx$log_file,
-      "WARN",
-      "Output suppressed for figure ", fig_id, "_", filename, " (0 < n < n_min). ",
-      "See threshold logfile in output/logfiles."
+    ctx <- tc_add_suppressed(
+      ctx = ctx,
+      object_id = paste0(fig_id, "_", filename),
+      output_category = output_category,
+      reason = paste0("Datenschutz-Threshold verletzt: 0 < n < ", config$thresholds$n_min)
     )
   }
-  
   ctx
 }
-
-

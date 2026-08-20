@@ -1,0 +1,5 @@
+2026-06-23 22:31:02 [INFO] Started scope: Prepare 
+2026-06-23 22:31:04 [INFO] Table written: 01_01_prepare_overview (rows=3, cols=3) 
+2026-06-23 22:31:04 [INFO] Table written: 01_02_mandatory_vars (rows=10, cols=4) 
+2026-06-23 22:31:04 [INFO] Excel workbook written: T:/OSP/OSP_Projekte/Biometrie (neu)/Forschung/Kooperationen/2504_Krebsregister_Fragestellung_1_Wohnortnahe_Versorgung/Analyse/KRFS1/output/Prepare/tables/Prepare_Tables.xlsx 
+2026-06-23 22:31:04 [INFO] Prepare finished. 
