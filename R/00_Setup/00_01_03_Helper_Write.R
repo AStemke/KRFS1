@@ -52,24 +52,38 @@ tc_add_analysis_label_to_table <- function(tab, analysis_label) {
 
 tc_add_analysis_label_to_plot <- function(plot, analysis_label) {
   current_title <- plot$labels$title
-  current_title <- if (is.null(current_title) || length(current_title) == 0L) {
+  current_title <- if (
+    is.null(current_title) ||
+      length(current_title) == 0L
+  ) {
     ""
   } else {
     as.character(current_title)[1L]
   }
 
+  title_prefix <- paste0(
+    analysis_label,
+    ": "
+  )
+
   title_with_label <- if (!nzchar(trimws(current_title))) {
     analysis_label
   } else if (
     identical(current_title, analysis_label) ||
-      endsWith(current_title, paste0(" - ", analysis_label))
+      startsWith(current_title, title_prefix)
   ) {
     current_title
   } else {
-    paste(current_title, analysis_label, sep = " - ")
+    paste0(
+      title_prefix,
+      current_title
+    )
   }
 
-  plot + ggplot2::labs(title = title_with_label)
+  plot +
+    ggplot2::labs(
+      title = title_with_label
+    )
 }
 
 # Pfade initialisieren -----------------------------
