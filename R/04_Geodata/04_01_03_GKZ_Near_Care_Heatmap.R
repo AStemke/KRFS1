@@ -68,10 +68,7 @@ if (config$analysis$active_output_group %in% heatmap_groups) {
         name = "Anteil wohnortnah"
       ) +
       ggplot2::labs(
-        title = paste0(
-          "Anteil wohnortnaher Versorgung nach Gemeinde - ",
-          config$analysis$active_output_group
-        )
+        title = "Anteil wohnortnaher Versorgung nach Gemeinde"
       ) +
       ggplot2::theme_minimal()
 
