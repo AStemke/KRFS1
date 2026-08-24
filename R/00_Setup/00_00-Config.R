@@ -122,7 +122,6 @@ config <- list(
     crs_lonlat = 4326,
     # Platzhalter: bitte an finale Datenquelle anpassen.
     gkz_path = file.path(
-      config$paths$current_wd,
       "data",
       "Geodata",
       "raw",
