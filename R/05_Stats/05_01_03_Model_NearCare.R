@@ -1,7 +1,7 @@
-# 05_01_03_Model_NearCare.R -----------
-# Zweck: Beispielmodell fuer wohnortnahe Versorgung
+# Modell wohnortnahe Versorgung -----------------------------
+## Vollstaendigen Modellframe erstellen --------------------------
 # Modell: near_care ~ sex + age_group + uicc
-# Datenschutz: Modellframe und alle Faktorlevel muessen safe sein
+# Datenschutz: Modellframe und alle Faktorlevel muessen safe sein.
 
 model_dat <- tumor_base |>
   dplyr::filter(!is.na(near_care), !is.na(sex), !is.na(age_group), !is.na(uicc)) |>
@@ -12,6 +12,18 @@ model_dat <- tumor_base |>
     sex = as.factor(sex)
   )
 
+# Modellvoraussetzungen -----------------------------
+## Beobachtete Auspraegungen der Praediktoren pruefen --------------------------
+model_predictors <- c("sex", "age_group", "uicc")
+predictor_level_counts <- vapply(
+  model_dat[model_predictors],
+  function(x) dplyr::n_distinct(x, na.rm = TRUE),
+  integer(1)
+)
+predictors_have_variation <- all(predictor_level_counts >= 2L)
+constant_predictors <- names(predictor_level_counts[predictor_level_counts < 2L])
+
+## Modell- und Levelzaehler erstellen --------------------------
 model_counts <- data.frame(
   model = "nearcare_logistic",
   n_model = nrow(model_dat),
@@ -22,10 +34,12 @@ model_counts <- data.frame(
 
 level_counts <- check_model_level_counts(
   data = model_dat,
-  vars = c("sex", "age_group", "uicc"),
+  vars = model_predictors,
   id_var = "LNGTUMORID"
 )
 
+# Prueftabellen -----------------------------
+## Datenschutzrelevante Zaehler schreiben --------------------------
 ctx <- tc_write_table(
   tab = model_counts,
   table_id = "05_03_nearcare_model_counts",
@@ -44,10 +58,29 @@ ctx <- tc_write_table(
   threshold_label_cols = c("variable", "level")
 )
 
-ok_model <- passes_threshold_category(model_counts, "model_result", n_col = c("n_model", "n_events", "n_nonevents"), label_cols = c("model"), object_name = "05_03_nearcare_model_counts", write_log = FALSE) &&
-  passes_threshold_category(level_counts, "model_result", n_col = "n", label_cols = c("variable", "level"), object_name = "05_03_nearcare_model_levels", write_log = FALSE) &&
-  nrow(model_dat) > 0 && dplyr::n_distinct(model_dat$near_care_num) == 2
+# Modellschaetzung -----------------------------
+## Datenschutz und Schaetzbarkeit pruefen --------------------------
+ok_model <- passes_threshold_category(
+  model_counts,
+  "model_result",
+  n_col = c("n_model", "n_events", "n_nonevents"),
+  label_cols = c("model"),
+  object_name = "05_03_nearcare_model_counts",
+  write_log = FALSE
+) &&
+  passes_threshold_category(
+    level_counts,
+    "model_result",
+    n_col = "n",
+    label_cols = c("variable", "level"),
+    object_name = "05_03_nearcare_model_levels",
+    write_log = FALSE
+  ) &&
+  nrow(model_dat) > 0 &&
+  dplyr::n_distinct(model_dat$near_care_num) == 2 &&
+  predictors_have_variation
 
+## Modell ausfuehren oder begruendet unterdruecken --------------------------
 if (isTRUE(ok_model)) {
   fit <- stats::glm(near_care_num ~ sex + age_group + uicc, data = model_dat, family = stats::binomial())
   fit_tab <- broom::tidy(fit, conf.int = TRUE, exponentiate = TRUE) |>
@@ -67,10 +100,20 @@ if (isTRUE(ok_model)) {
     threshold_label_cols = c("model", "term")
   )
 } else {
+  suppression_reason <- if (!predictors_have_variation) {
+    paste0(
+      "Modell nicht ausgegeben: Praediktor(en) mit weniger als zwei beobachteten Auspraegungen: ",
+      paste(constant_predictors, collapse = ", "),
+      "."
+    )
+  } else {
+    "Modell nicht ausgegeben: Modellframe/Events/Level nicht safe oder Outcome hat nur eine Auspraegung."
+  }
+  
   ctx <- tc_add_suppressed(
     ctx,
     object_id = "05_03_nearcare_model_or",
     output_category = "model_result",
-    reason = "Modell nicht ausgegeben: Modellframe/Events/Level nicht safe oder Outcome hat nur eine Auspraegung."
+    reason = suppression_reason
   )
 }
