@@ -121,12 +121,19 @@ config <- list(
     crs_target = 25832,
     crs_lonlat = 4326,
     # Platzhalter: bitte an finale Datenquelle anpassen.
-    gkz_path = file.path("data", "geodata", "gemeinden.gpkg"),
+    gkz_path = file.path(
+      config$paths$current_wd,
+      "data",
+      "Geodata",
+      "raw",
+      "verwaltungsgrenzen",
+      "v_al_gemeinde.shp"
+    ),
     gkz_layer = NULL,
-    gkz_key_sf = "GKZ",
-    plz_path = file.path("data", "geodata", "plz.gpkg"),
-    plz_layer = NULL,
-    plz_key_sf = "plz"
+    gkz_key_sf = "gemeinde_i"
+    # plz_path = file.path("data", "geodata", "plz.gpkg"),
+    # plz_layer = NULL,
+    # plz_key_sf = "plz"
   ),
 
   # Analyseparameter -----------------------------
