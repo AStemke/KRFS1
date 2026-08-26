@@ -154,25 +154,25 @@ kr_glmer_random_stats <- function(fit, model_name, group_var) {
 
 # Adjustierte Wahrscheinlichkeiten -----------------------------
 ## Empirisch standardisierte Wahrscheinlichkeiten fuer Faktorlevel berechnen --------------------------
-kr_avg_predictions_glm <- function(fit, data, variable, levels = NULL) {
+kr_avg_predictions_glm <- function(fit, data, variable, level_values = NULL) {
   stopifnot(inherits(fit, "glm"), is.data.frame(data), variable %in% names(data))
   
-  if (is.null(levels)) {
-    levels <- unique(as.character(data[[variable]]))
-    levels <- levels[!is.na(levels)]
+  if (is.null(level_values)) {
+    level_values <- unique(as.character(data[[variable]]))
+    level_values <- level_values[!is.na(level_values)]
   }
   
   beta <- stats::coef(fit)
   vc <- stats::vcov(fit)
   zcrit <- stats::qnorm(0.975)
   
-  out <- lapply(levels, function(level_value) {
+  out <- lapply(level_values, function(level_value) {
     newdata <- data
     
     if (is.factor(data[[variable]])) {
       newdata[[variable]] <- factor(
         rep(level_value, nrow(newdata)),
-        levels = levels(data[[variable]])
+        levels = base::levels(data[[variable]])
       )
     } else {
       newdata[[variable]] <- rep(level_value, nrow(newdata))
