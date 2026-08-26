@@ -171,9 +171,46 @@ config <- list(
   ),
 
   # Explore / Altersgruppen -----------------------------
-  ## Altersklassen --------------------------
+  ## Altersklassenschemata --------------------------
   explore = list(
-    age_breaks = c(-Inf, 18, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, Inf),
-    age_labels = c("<18", "18-<25", "25-<30", "30-<35", "35-<40", "40-<45", "45-<50", "50-<55", "55-<60", "60-<65", "65-<70", "70-<75", "75-<80", "80-<85", "85-<90", "90-<95", ">=95")
+    # Dieses Schema wird ausserhalb der Deskription verwendet und kann schnell
+    # durch Aendern eines einzelnen Wertes gewechselt werden.
+    active_age_scheme = "versorgung",
+
+    # In der Deskription werden standardmaessig alle unten definierten Varianten
+    # nebeneinander ausgegeben. FALSE beschraenkt auf active_age_scheme.
+    run_all_age_schemes_descriptive = TRUE,
+
+    age_schemes = list(
+      fein = list(
+        label = "Feine Altersklassen",
+        breaks = c(-Inf, 18, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, Inf),
+        labels = c("<18", "18-<25", "25-<30", "30-<35", "35-<40", "40-<45", "45-<50", "50-<55", "55-<60", "60-<65", "65-<70", "70-<75", "75-<80", "80-<85", "85-<90", "90-<95", ">=95")
+      ),
+      versorgung = list(
+        label = "Versorgungsorientierte Altersklassen",
+        breaks = c(-Inf, 18, 50, 60, 70, 80, Inf),
+        labels = c("<18", "18-<50", "50-<60", "60-<70", "70-<80", ">=80")
+      ),
+      geriatrisch = list(
+        label = "Geriatrisch orientierte Altersklassen",
+        breaks = c(-Inf, 18, 50, 65, 75, 85, Inf),
+        labels = c("<18", "18-<50", "50-<65", "65-<75", "75-<85", ">=85")
+      )
+    )
   )
 )
+
+# Aktives Altersklassenschema -----------------------------
+## Rueckwaertskompatible age_breaks und age_labels setzen --------------------------
+active_age_scheme <- config$explore$active_age_scheme
+if (!active_age_scheme %in% names(config$explore$age_schemes)) {
+  stop(
+    "Unbekanntes config$explore$active_age_scheme: ",
+    active_age_scheme,
+    call. = FALSE
+  )
+}
+
+config$explore$age_breaks <- config$explore$age_schemes[[active_age_scheme]]$breaks
+config$explore$age_labels <- config$explore$age_schemes[[active_age_scheme]]$labels
