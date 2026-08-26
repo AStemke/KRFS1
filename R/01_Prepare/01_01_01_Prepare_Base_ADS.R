@@ -25,7 +25,7 @@ dat_msg <- dat_msg |>
     age_group = kr_make_age_group(age_at_diag),
     icd10 = if ("STRDIAGNOSEICD10" %in% names(dat_msg)) toupper(trimws(as.character(STRDIAGNOSEICD10))) else NA_character_,
     icd10_3 = kr_icd3(icd10),
-    uicc = if ("STRTNMSTADIUM_UICC" %in% names(dat_msg)) as.character(STRTNMSTADIUM_UICC) else NA_character_,
+    uicc = if ("STRTNMSTADIUM_UICC" %in% names(dat_msg)) kr_normalize_uicc(STRTNMSTADIUM_UICC) else NA_character_,
     therapy_type = if ("STRTHERAPIEART" %in% names(dat_msg)) as.character(STRTHERAPIEART) else NA_character_,
     therapy_start_date = if ("THERAPIESTART" %in% names(dat_msg)) kr_parse_date(THERAPIESTART) else as.Date(NA),
     death_date = if ("DTMSTERBEMONAT" %in% names(dat_msg)) kr_parse_date(DTMSTERBEMONAT) else as.Date(NA),
