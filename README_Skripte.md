@@ -1,4 +1,4 @@
-# KRFS1 R-Skripte v0-0-2
+# KRFS1 R-Skripte
 
 Diese Skripte folgen der README-Struktur:
 

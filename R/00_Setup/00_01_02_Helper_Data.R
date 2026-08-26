@@ -1,43 +1,48 @@
-# 00_01_02_Helper_Data.R -----------
-# Zweck:
-# - Robuste Hilfsfunktionen fuer Datumsvariablen, IDs, ICD-10, Altersgruppen
-# - Dummydaten enthalten teils Monats-/Jahresangaben; diese werden auf Monatsmitte gesetzt
+# 00_01_02_Helper_Data.R -----------------------------
+## Zweck --------------------------
+# Robuste Hilfsfunktionen fuer Datumsvariablen, IDs, ICD-10, Altersgruppen und Analyse-Kohorten.
+# Dummydaten enthalten teils Monats-/Jahresangaben; diese werden auf Monatsmitte gesetzt.
 
+# Allgemeine Datenhelper -----------------------------
+## Erster nicht fehlender Wert --------------------------
 first_non_missing <- function(x) {
   x <- x[!is.na(x) & x != ""]
   if (length(x) == 0) return(NA)
   x[[1]]
 }
 
+## Character-Konvertierung --------------------------
 kr_as_character <- function(x) {
   x <- as.character(x)
   x[!is.na(x) & x == ""] <- NA_character_
   x
 }
 
+# Datumshelper -----------------------------
+## Datum robust parsen --------------------------
 kr_parse_date <- function(x, impute_day = 15L) {
   if (inherits(x, "Date")) return(x)
   if (inherits(x, "POSIXct") || inherits(x, "POSIXlt")) return(as.Date(x))
-  
+
   out <- rep(as.Date(NA), length(x))
-  
+
   if (is.numeric(x) || is.integer(x)) {
     idx <- !is.na(x)
     out[idx] <- as.Date(x[idx], origin = "1899-12-30")
     return(out)
   }
-  
+
   x_chr <- trimws(as.character(x))
   x_chr[x_chr %in% c("", "NA", "NULL")] <- NA_character_
-  
+
   idx_full <- !is.na(x_chr) & grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", x_chr)
   out[idx_full] <- as.Date(x_chr[idx_full])
-  
+
   idx_dmy <- !is.na(x_chr) & grepl("^[0-9]{1,2}\\.[0-9]{1,2}\\.[0-9]{4}$", x_chr)
   if (any(idx_dmy)) {
     out[idx_dmy] <- as.Date(x_chr[idx_dmy], format = "%d.%m.%Y")
   }
-  
+
   idx_my <- !is.na(x_chr) & grepl("^[0-9]{1,2}\\.[0-9]{4}$", x_chr)
   if (any(idx_my)) {
     parts <- strsplit(x_chr[idx_my], "\\.")
@@ -48,7 +53,7 @@ kr_parse_date <- function(x, impute_day = 15L) {
     tmp[ok] <- as.Date(sprintf("%04d-%02d-%02d", year[ok], month[ok], impute_day))
     out[idx_my] <- tmp
   }
-  
+
   idx_ym <- !is.na(x_chr) & grepl("^[0-9]{4}-[0-9]{1,2}$", x_chr)
   if (any(idx_ym)) {
     parts <- strsplit(x_chr[idx_ym], "-")
@@ -59,21 +64,25 @@ kr_parse_date <- function(x, impute_day = 15L) {
     tmp[ok] <- as.Date(sprintf("%04d-%02d-%02d", year[ok], month[ok], impute_day))
     out[idx_ym] <- tmp
   }
-  
+
   out
 }
 
+## Jahr aus Datum --------------------------
 kr_year <- function(x) {
   d <- kr_parse_date(x)
   as.integer(format(d, "%Y"))
 }
 
+# ICD-10 und Kategorien -----------------------------
+## Dreistelligen ICD-10-Code bilden --------------------------
 kr_icd3 <- function(x) {
   x <- toupper(trimws(as.character(x)))
   x[!is.na(x) & x == ""] <- NA_character_
   substr(x, 1, 3)
 }
 
+## Geschlecht normalisieren --------------------------
 kr_normalize_sex <- function(x) {
   x <- toupper(trimws(as.character(x)))
   dplyr::case_when(
@@ -85,6 +94,7 @@ kr_normalize_sex <- function(x) {
   )
 }
 
+## Altersgruppe bilden --------------------------
 kr_make_age_group <- function(age) {
   cut(
     as.numeric(age),
@@ -94,6 +104,8 @@ kr_make_age_group <- function(age) {
   )
 }
 
+# Geografische Variablen -----------------------------
+## GKZ normalisieren --------------------------
 kr_normalize_gkz <- function(x) {
   x <- gsub("[^0-9]", "", as.character(x))
   x[!is.na(x) & x == ""] <- NA_character_
@@ -102,12 +114,55 @@ kr_normalize_gkz <- function(x) {
   x
 }
 
+## PLZ normalisieren --------------------------
 kr_normalize_plz <- function(x) {
   x <- gsub("[^0-9]", "", as.character(x))
   x[!is.na(x) & x == ""] <- NA_character_
   ifelse(!is.na(x), stringr::str_pad(x, width = 5, side = "left", pad = "0"), NA_character_)
 }
 
+# Mathematische Helper -----------------------------
+## Sichere Division --------------------------
 safe_divide <- function(num, den) {
   ifelse(is.na(den) | den == 0, NA_real_, num / den)
+}
+
+# Analyse-Kohorten -----------------------------
+## Tumorbasis nach ICD-10 filtern --------------------------
+kr_filter_tumor_cohort <- function(tumor_base, icd10_3_keep = character(0)) {
+  stopifnot(is.data.frame(tumor_base), "icd10_3" %in% names(tumor_base))
+
+  icd10_3_keep <- unique(toupper(trimws(as.character(icd10_3_keep))))
+  icd10_3_keep <- icd10_3_keep[!is.na(icd10_3_keep) & nzchar(icd10_3_keep)]
+
+  if (length(icd10_3_keep) == 0L) {
+    return(tumor_base)
+  }
+
+  tumor_base |>
+    dplyr::filter(icd10_3 %in% icd10_3_keep)
+}
+
+## Patientenbasis aus gefilterter Tumorbasis neu bilden --------------------------
+kr_build_patient_base <- function(tumor_base) {
+  stopifnot(is.data.frame(tumor_base), "LNGREGISTERNR" %in% names(tumor_base))
+
+  tumor_base |>
+    dplyr::group_by(LNGREGISTERNR) |>
+    dplyr::summarise(
+      n_tumors = dplyr::n_distinct(LNGTUMORID),
+      first_diagnosis_date = suppressWarnings(min(diagnosis_date, na.rm = TRUE)),
+      first_diagnosis_year = suppressWarnings(min(diagnosis_year, na.rm = TRUE)),
+      sex = first_non_missing(sex),
+      age_at_first_diag = first_non_missing(age_at_diag),
+      first_gkz_diagnose = first_non_missing(gkz_diagnose),
+      min_distance_km = suppressWarnings(min(distance_km, na.rm = TRUE)),
+      any_near_care = any(near_care, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    dplyr::mutate(
+      first_diagnosis_date = dplyr::if_else(is.infinite(first_diagnosis_date), as.Date(NA), first_diagnosis_date),
+      first_diagnosis_year = dplyr::if_else(is.infinite(first_diagnosis_year), NA_integer_, as.integer(first_diagnosis_year)),
+      min_distance_km = dplyr::if_else(is.infinite(min_distance_km), NA_real_, min_distance_km)
+    )
 }
