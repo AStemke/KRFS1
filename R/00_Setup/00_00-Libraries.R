@@ -21,6 +21,7 @@ pkg_purpose <- data.frame(
     "ggplot2",
     "scales",
     "broom",
+    "lme4",
     "sf",
     "units"
   ),
@@ -38,6 +39,7 @@ pkg_purpose <- data.frame(
     "Grafiken fuer Balkendiagramme, Histogramme und Karten erzeugen",
     "Achsen und Prozentwerte in Grafiken formatieren",
     "Statistische Tests und Modelloutputs in Tabellenform bringen",
+    "Logistische Mixed-Effects-Modelle fuer regionale Clusterung schaetzen",
     "Geodaten lesen, transformieren, verbinden und als Karten darstellen",
     "Einheiten fuer Geometrien/Distanzen konsistent behandeln"
   ),
