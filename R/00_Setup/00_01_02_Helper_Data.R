@@ -1,6 +1,6 @@
 # 00_01_02_Helper_Data.R -----------------------------
 ## Zweck --------------------------
-# Robuste Hilfsfunktionen fuer Datumsvariablen, IDs, ICD-10, Altersgruppen und Analyse-Kohorten.
+# Robuste Hilfsfunktionen fuer Datumsvariablen, IDs, ICD-10, UICC, Altersgruppen und Analyse-Kohorten.
 # Dummydaten enthalten teils Monats-/Jahresangaben; diese werden auf Monatsmitte gesetzt.
 
 # Allgemeine Datenhelper -----------------------------
@@ -80,6 +80,27 @@ kr_icd3 <- function(x) {
   x <- toupper(trimws(as.character(x)))
   x[!is.na(x) & x == ""] <- NA_character_
   substr(x, 1, 3)
+}
+
+## UICC-Stadium vereinheitlichen --------------------------
+kr_normalize_uicc <- function(x) {
+  x <- toupper(trimws(as.character(x)))
+  x[x %in% c("", "NA", "NULL")] <- NA_character_
+
+  x <- gsub("^UICC[[:space:]]*", "", x)
+  x <- gsub("^STADIUM[[:space:]]*", "", x)
+  x <- gsub("[[:space:]._-]", "", x)
+
+  dplyr::case_when(
+    is.na(x) ~ NA_character_,
+    grepl("^0", x) ~ "0",
+    grepl("^IV", x) ~ "IV",
+    grepl("^III", x) ~ "III",
+    grepl("^II", x) ~ "II",
+    grepl("^I", x) ~ "I",
+    x %in% c("X", "UNBEKANNT", "UNK", "UNKNOWN") ~ "X",
+    TRUE ~ x
+  )
 }
 
 ## Geschlecht normalisieren --------------------------
