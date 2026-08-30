@@ -87,19 +87,79 @@ tc_add_analysis_label_to_plot <- function(plot, analysis_label) {
 }
 
 # Pfade initialisieren -----------------------------
-tc_init_paths <- function(scope, current_wd = config$paths$current_wd) {
-  stopifnot(is.character(scope), length(scope) == 1, nzchar(scope))
-  base <- file.path(current_wd, "output", scope)
+## Output-Verzeichnisse --------------------------
+tc_init_paths <- function(
+    scope,
+    current_wd = config$paths$current_wd
+) {
+  stopifnot(
+    is.character(scope),
+    length(scope) == 1L,
+    !is.na(scope),
+    nzchar(scope)
+  )
+
+  stopifnot(
+    is.character(current_wd),
+    length(current_wd) == 1L,
+    !is.na(current_wd),
+    nzchar(current_wd)
+  )
+
+  base <- file.path(
+    current_wd,
+    "output",
+    scope
+  )
+
   paths <- list(
     scope = scope,
     output_base = base,
     tables = file.path(base, "tables"),
     figures = file.path(base, "figures"),
     rds = file.path(base, "rds"),
-    logfiles = file.path(current_wd, "output", "logfiles")
+    logfiles = file.path(
+      current_wd,
+      "output",
+      "logfiles"
+    )
   )
-  path_names <- c("output_base", "tables", "figures", "rds", "logfiles")
-  for (p in paths[path_names]) dir.create(p, recursive = TRUE, showWarnings = FALSE)
+
+  path_names <- c(
+    "output_base",
+    "tables",
+    "figures",
+    "rds",
+    "logfiles"
+  )
+
+  for (path_name in path_names) {
+    path <- paths[[path_name]]
+
+    if (!dir.exists(path)) {
+      created <- dir.create(
+        path,
+        recursive = TRUE,
+        showWarnings = TRUE
+      )
+
+      if (!isTRUE(created) && !dir.exists(path)) {
+        stop(
+          paste0(
+            "Output-Verzeichnis konnte nicht angelegt werden:\n",
+            path,
+            "\n\n",
+            "Bitte pruefen:\n",
+            "- existiert config$paths$current_wd?\n",
+            "- besteht Schreibberechtigung?\n",
+            "- ist das Laufwerk bzw. Netzlaufwerk erreichbar?"
+          ),
+          call. = FALSE
+        )
+      }
+    }
+  }
+
   paths
 }
 
@@ -113,13 +173,37 @@ tc_log_path <- function(paths, time = Sys.time(), tz = "Europe/Berlin") {
 }
 
 # Log schreiben -----------------------------
-log_write <- function(log_file, level = "INFO", ...) {
+## Logdatei --------------------------
+log_write <- function(
+    log_file,
+    level = "INFO",
+    ...
+) {
+  log_dir <- dirname(log_file)
+
+  if (!dir.exists(log_dir)) {
+    stop(
+      paste0(
+        "Log-Verzeichnis existiert nicht:\n",
+        log_dir
+      ),
+      call. = FALSE
+    )
+  }
+
   msg <- paste0(
     format(Sys.time(), "%Y-%m-%d %H:%M:%S"),
     " [", level, "] ",
     paste0(..., collapse = "")
   )
-  cat(msg, "\n", file = log_file, append = TRUE)
+
+  cat(
+    msg,
+    "\n",
+    file = log_file,
+    append = TRUE
+  )
+
   message(msg)
   invisible(msg)
 }
