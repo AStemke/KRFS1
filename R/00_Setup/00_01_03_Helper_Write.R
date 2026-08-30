@@ -106,11 +106,41 @@ tc_init_paths <- function(
     nzchar(current_wd)
   )
 
-  base <- file.path(
+  if (!dir.exists(current_wd)) {
+    stop(
+      paste0(
+        "Projektverzeichnis existiert nicht oder ist nicht erreichbar:\n",
+        current_wd
+      ),
+      call. = FALSE
+    )
+  }
+
+  current_wd <- normalizePath(
     current_wd,
-    "output",
-    scope
+    winslash = "/",
+    mustWork = TRUE
   )
+
+  output_root <- file.path(current_wd, "output")
+  scope_parts <- strsplit(
+    gsub("\\\\", "/", scope),
+    "/",
+    fixed = TRUE
+  )[[1L]]
+  scope_parts <- scope_parts[nzchar(scope_parts)]
+
+  paths_to_create <- list(output_root)
+  current_path <- output_root
+
+  if (length(scope_parts) > 0L) {
+    for (scope_part in scope_parts) {
+      current_path <- file.path(current_path, scope_part)
+      paths_to_create[[length(paths_to_create) + 1L]] <- current_path
+    }
+  }
+
+  base <- current_path
 
   paths <- list(
     scope = scope,
@@ -118,28 +148,24 @@ tc_init_paths <- function(
     tables = file.path(base, "tables"),
     figures = file.path(base, "figures"),
     rds = file.path(base, "rds"),
-    logfiles = file.path(
-      current_wd,
-      "output",
-      "logfiles"
+    logfiles = file.path(output_root, "logfiles")
+  )
+
+  paths_to_create <- c(
+    paths_to_create,
+    list(
+      paths$tables,
+      paths$figures,
+      paths$rds,
+      paths$logfiles
     )
   )
 
-  path_names <- c(
-    "output_base",
-    "tables",
-    "figures",
-    "rds",
-    "logfiles"
-  )
-
-  for (path_name in path_names) {
-    path <- paths[[path_name]]
-
+  for (path in unique(unlist(paths_to_create, use.names = FALSE))) {
     if (!dir.exists(path)) {
       created <- dir.create(
         path,
-        recursive = TRUE,
+        recursive = FALSE,
         showWarnings = TRUE
       )
 
@@ -149,10 +175,9 @@ tc_init_paths <- function(
             "Output-Verzeichnis konnte nicht angelegt werden:\n",
             path,
             "\n\n",
-            "Bitte pruefen:\n",
-            "- existiert config$paths$current_wd?\n",
-            "- besteht Schreibberechtigung?\n",
-            "- ist das Laufwerk bzw. Netzlaufwerk erreichbar?"
+            "Das Projektverzeichnis selbst ist erreichbar. ",
+            "Bitte pruefen, ob innerhalb dieses Verzeichnisses ",
+            "Unterordner angelegt werden duerfen."
           ),
           call. = FALSE
         )
