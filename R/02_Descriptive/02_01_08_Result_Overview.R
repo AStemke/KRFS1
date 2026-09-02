@@ -20,7 +20,7 @@ kr_result_overview_region <- function(gkz_diagnose) {
 
 ## Kennzahlen fuer beliebige Gruppierung --------------------------
 kr_result_overview_summary <- function(data, group_vars) {
-  data |>
+  out <- data |>
     dplyr::group_by(
       dplyr::across(dplyr::all_of(group_vars))
     ) |>
@@ -55,11 +55,19 @@ kr_result_overview_summary <- function(data, group_vars) {
         icd10_3,
         levels = config$analysis$result_overview_icd10_3
       )
-    ) |>
-    dplyr::arrange(
-      icd10_3,
-      dplyr::across(dplyr::any_of(c("diagnosis_year", "region")))
-    ) |>
+    )
+
+  sort_vars <- intersect(
+    c("icd10_3", "diagnosis_year", "region"),
+    names(out)
+  )
+
+  out <- dplyr::arrange(
+    out,
+    !!!rlang::syms(sort_vars)
+  )
+
+  out |>
     dplyr::mutate(
       icd10_3 = as.character(icd10_3)
     )
