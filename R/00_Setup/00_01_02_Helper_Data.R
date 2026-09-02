@@ -153,6 +153,13 @@ safe_divide <- function(num, den) {
 kr_filter_tumor_cohort <- function(tumor_base, icd10_3_keep = character(0)) {
   stopifnot(is.data.frame(tumor_base), "icd10_3" %in% names(tumor_base))
 
+  # Die Distanzdefinition wird bei jedem Modul erneut auf die geladene Basis
+  # angewendet. So greifen geaenderte Default- oder ICD-spezifische Grenzen auch
+  # bei separat gestarteten Analysemodulen und aelteren Prepare-RDS-Dateien.
+  if (exists("kr_apply_near_care_config", mode = "function")) {
+    tumor_base <- kr_apply_near_care_config(tumor_base)
+  }
+
   icd10_3_keep <- unique(toupper(trimws(as.character(icd10_3_keep))))
   icd10_3_keep <- icd10_3_keep[!is.na(icd10_3_keep) & nzchar(icd10_3_keep)]
 
