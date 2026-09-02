@@ -30,6 +30,21 @@ kr_near_care_limit_km <- function(icd10_3) {
   out
 }
 
+## Distanzkonfiguration auf Tumorbasis anwenden --------------------------
+kr_apply_near_care_config <- function(tumor_base) {
+  stopifnot(
+    is.data.frame(tumor_base),
+    "icd10_3" %in% names(tumor_base),
+    "distance_km" %in% names(tumor_base)
+  )
+
+  tumor_base |>
+    dplyr::mutate(
+      near_care_limit_km = kr_near_care_limit_km(icd10_3),
+      near_care = !is.na(distance_km) & distance_km <= near_care_limit_km
+    )
+}
+
 ## Lesbare Distanzangabe fuer Titel --------------------------
 kr_near_care_distance_label <- function(
     icd10_3 = config$analysis$active_icd10_3
