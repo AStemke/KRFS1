@@ -1,8 +1,37 @@
-# 01_01_01_Prepare_Base_ADS.R -----------
-# Zweck:
-# - Standardisierte Variablen fuer Meldungs-, Tumor- und Patientenebene erzeugen
+# Datenaufbereitung -----------------------------
+## Zweck --------------------------
+# Standardisierte Variablen fuer Meldungs-, Tumor- und Patientenebene erzeugen.
 
-# Meldungsebene -----------
+# Distanzgrenzen -----------------------------
+## Entitaetsspezifischen Grenzwert bestimmen --------------------------
+kr_near_care_limit_km <- function(icd10_3) {
+  default_km <- as.numeric(config$analysis$near_care_default_km)
+  limits <- config$analysis$near_care_km_by_icd
+
+  out <- rep(default_km, length(icd10_3))
+
+  if (length(limits) == 0L) {
+    return(out)
+  }
+
+  if (is.null(names(limits)) || any(!nzchar(names(limits)))) {
+    stop(
+      "config$analysis$near_care_km_by_icd muss ein benannter numerischer Vektor sein.",
+      call. = FALSE
+    )
+  }
+
+  limits <- as.numeric(limits)
+  names(limits) <- names(config$analysis$near_care_km_by_icd)
+  matched <- match(icd10_3, names(limits))
+  has_specific_limit <- !is.na(matched)
+
+  out[has_specific_limit] <- limits[matched[has_specific_limit]]
+  out
+}
+
+# Meldungsebene -----------------------------
+## Rohdaten standardisieren --------------------------
 dat_msg <- dat_raw
 names(dat_msg) <- trimws(names(dat_msg))
 
@@ -15,7 +44,7 @@ if ("PLZ_DIAGNOSE" %in% names(dat_msg)) dat_msg$PLZ_DIAGNOSE <- kr_normalize_plz
 if ("PLZ_PATIENT" %in% names(dat_msg)) dat_msg$PLZ_PATIENT <- kr_normalize_plz(dat_msg$PLZ_PATIENT)
 if ("PLZ_Krankenhaus" %in% names(dat_msg)) dat_msg$PLZ_Krankenhaus <- kr_normalize_plz(dat_msg$PLZ_Krankenhaus)
 
-# Standardvariablen -----------
+## Standardvariablen --------------------------
 dat_msg <- dat_msg |>
   dplyr::mutate(
     diagnosis_date = if ("DIAGNOSEDATUM" %in% names(dat_msg)) kr_parse_date(DIAGNOSEDATUM) else as.Date(NA),
@@ -31,7 +60,8 @@ dat_msg <- dat_msg |>
     death_date = if ("DTMSTERBEMONAT" %in% names(dat_msg)) kr_parse_date(DTMSTERBEMONAT) else as.Date(NA),
     report_date = if ("DTMMELDUNG" %in% names(dat_msg)) kr_parse_date(DTMMELDUNG) else as.Date(NA),
     distance_km = if ("Distanz_km" %in% names(dat_msg)) suppressWarnings(as.numeric(Distanz_km)) else NA_real_,
-    near_care = !is.na(distance_km) & distance_km <= config$analysis$near_care_km,
+    near_care_limit_km = kr_near_care_limit_km(icd10_3),
+    near_care = !is.na(distance_km) & distance_km <= near_care_limit_km,
     distance_group = cut(
       distance_km,
       breaks = config$analysis$distance_breaks_km,
@@ -40,7 +70,8 @@ dat_msg <- dat_msg |>
     )
   )
 
-# Optionale Filter aus config -----------
+# Filter -----------------------------
+## Optionale Analysefilter --------------------------
 if (!is.null(config$analysis$diagnosis_year_min)) {
   dat_msg <- dat_msg |> dplyr::filter(is.na(diagnosis_year) | diagnosis_year >= config$analysis$diagnosis_year_min)
 }
@@ -52,7 +83,8 @@ if (!is.null(config$analysis$icd10_prefix_keep)) {
     dplyr::filter(stringr::str_starts(icd10, paste0("^(", paste(config$analysis$icd10_prefix_keep, collapse = "|"), ")")))
 }
 
-# Tumorebene -----------
+# Tumorebene -----------------------------
+## Meldungen zu Tumoren aggregieren --------------------------
 tumor_base <- dat_msg |>
   dplyr::group_by(LNGTUMORID) |>
   dplyr::summarise(
@@ -70,6 +102,7 @@ tumor_base <- dat_msg |>
     plz_diagnose = first_non_missing(PLZ_DIAGNOSE),
     plz_patient = first_non_missing(PLZ_PATIENT),
     distance_km = suppressWarnings(min(distance_km, na.rm = TRUE)),
+    near_care_limit_km = first_non_missing(near_care_limit_km),
     near_care = any(near_care, na.rm = TRUE),
     distance_group = first_non_missing(as.character(distance_group)),
     n_messages = dplyr::n(),
@@ -88,7 +121,8 @@ tumor_base <- dat_msg |>
     distance_group = factor(distance_group, levels = config$analysis$distance_labels)
   )
 
-# Patientenebene -----------
+# Patientenebene -----------------------------
+## Tumoren zu Patienten aggregieren --------------------------
 patient_base <- tumor_base |>
   dplyr::group_by(LNGREGISTERNR) |>
   dplyr::summarise(
@@ -108,7 +142,8 @@ patient_base <- tumor_base |>
     min_distance_km = dplyr::if_else(is.infinite(min_distance_km), NA_real_, min_distance_km)
   )
 
-# Speichern -----------
+# Speichern -----------------------------
+## Analysebasen --------------------------
 saveRDS(dat_msg, file = file.path(ctx$paths$rds, "dat_msg.rds"))
 saveRDS(tumor_base, file = file.path(ctx$paths$rds, "tumor_base.rds"))
 saveRDS(patient_base, file = file.path(ctx$paths$rds, "patient_base.rds"))
