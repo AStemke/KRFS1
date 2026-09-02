@@ -2,34 +2,6 @@
 ## Zweck --------------------------
 # Standardisierte Variablen fuer Meldungs-, Tumor- und Patientenebene erzeugen.
 
-# Distanzgrenzen -----------------------------
-## Entitaetsspezifischen Grenzwert bestimmen --------------------------
-kr_near_care_limit_km <- function(icd10_3) {
-  default_km <- as.numeric(config$analysis$near_care_default_km)
-  limits <- config$analysis$near_care_km_by_icd
-
-  out <- rep(default_km, length(icd10_3))
-
-  if (length(limits) == 0L) {
-    return(out)
-  }
-
-  if (is.null(names(limits)) || any(!nzchar(names(limits)))) {
-    stop(
-      "config$analysis$near_care_km_by_icd muss ein benannter numerischer Vektor sein.",
-      call. = FALSE
-    )
-  }
-
-  limits <- as.numeric(limits)
-  names(limits) <- names(config$analysis$near_care_km_by_icd)
-  matched <- match(icd10_3, names(limits))
-  has_specific_limit <- !is.na(matched)
-
-  out[has_specific_limit] <- limits[matched[has_specific_limit]]
-  out
-}
-
 # Meldungsebene -----------------------------
 ## Rohdaten standardisieren --------------------------
 dat_msg <- dat_raw
