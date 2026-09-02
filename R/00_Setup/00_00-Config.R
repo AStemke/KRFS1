@@ -130,9 +130,6 @@ config <- list(
     ),
     gkz_layer = NULL,
     gkz_key_sf = "gemeinde_i"
-    # plz_path = file.path("data", "geodata", "plz.gpkg"),
-    # plz_layer = NULL,
-    # plz_key_sf = "plz"
   ),
 
   # Analyseparameter -----------------------------
@@ -153,11 +150,23 @@ config <- list(
     # Entitaeten mit separaten Auswertungsordnern.
     focus_icd10_3 = c("C50", "C61", "C34", "C18", "C44"),
 
+    # Entitaeten fuer die kompakte Ergebnis-Uebersicht.
+    result_overview_icd10_3 = c("C50", "C61", "C34", "C18", "C44"),
+
     # Wird im Main-Skript beim Durchlauf der Kohorten gesetzt.
     active_output_group = "Gesamt",
     active_icd10_3 = character(0),
 
+    # Default fuer Entitaeten ohne eigenen Grenzwert.
+    near_care_default_km = 25,
+
+    # Optionale entitaetsspezifische Grenzwerte. Weitere ICD-10-Codes koennen
+    # einfach als benannte Werte ergaenzt werden, z.B. c(C50 = 20, C61 = 30).
+    near_care_km_by_icd = c(),
+
+    # Rueckwaertskompatibler Alias fuer Skripte, die nur einen Wert anzeigen.
     near_care_km = 25,
+
     distance_breaks_km = c(-Inf, 10, 25, 50, 100, Inf),
     distance_labels = c("<10 km", "10-<25 km", "25-<50 km", "50-<100 km", ">=100 km")
   ),
@@ -214,3 +223,7 @@ if (!active_age_scheme %in% names(config$explore$age_schemes)) {
 
 config$explore$age_breaks <- config$explore$age_schemes[[active_age_scheme]]$breaks
 config$explore$age_labels <- config$explore$age_schemes[[active_age_scheme]]$labels
+
+# Distanzkonfiguration -----------------------------
+## Rueckwaertskompatiblen Default synchronisieren --------------------------
+config$analysis$near_care_km <- config$analysis$near_care_default_km
