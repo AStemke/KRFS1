@@ -1,16 +1,12 @@
-# 04_01-Geodata_Sourcing.R
-#
+# 04_01-Geodata_Sourcing.R -----------------------------
+## Zweck --------------------------
 # Erstellt die Geodaten-Auswertungen fuer die aktive ICD-10-Kohorte.
-# Tabellen und das Gebietsdiagramm werden auch ohne Geometrien erzeugt;
-# ausschließlich die Karten werden bei fehlenden Geodaten uebersprungen.
-
+# Tabellen und Gebietsdiagramme werden auch ohne Geometrien erzeugt;
+# ausschliesslich die Karten werden bei fehlenden Geodaten uebersprungen.
 
 # Datenbasis -----------------------------
 ## Aktive Kohorte --------------------------
-
-tumor_base_all <- if (
-  exists("tumor_base_all")
-) {
+tumor_base_all <- if (exists("tumor_base_all")) {
   tumor_base_all
 } else {
   readRDS(
@@ -30,9 +26,8 @@ tumor_base <- kr_filter_tumor_cohort(
   icd10_3_keep = config$analysis$active_icd10_3
 )
 
-
+# Kontext -----------------------------
 ## Ausgabekontext --------------------------
-
 ctx <- tc_init_ctx(
   scope = file.path(
     config$analysis$active_output_group,
@@ -40,10 +35,8 @@ ctx <- tc_init_ctx(
   )
 )
 
-
 # Geodaten -----------------------------
 ## GKZ-Geometrien --------------------------
-
 gkz_geo <- NULL
 
 if (isTRUE(config$geodata$use_geodata)) {
@@ -60,25 +53,45 @@ if (isTRUE(config$geodata$use_geodata)) {
   )
 }
 
-
 # Auswertung -----------------------------
-## Analyseskripte --------------------------
+## Grundauswertungen --------------------------
+geodata_dir <- file.path(
+  config$paths$current_wd,
+  "R",
+  "04_Geodata"
+)
 
-source_setup_helpers(
-  current_wd = config$paths$current_wd,
-  setup_subdir = file.path(
-    "R",
-    "04_Geodata"
-  ),
-  prefix = "04_01_",
-  verbose = FALSE,
+source(
+  file.path(geodata_dir, "04_01_01_GKZ_Diagnosis_Aggregate.R"),
+  local = FALSE
+)
+source(
+  file.path(geodata_dir, "04_01_02_GKZ_Choropleth.R"),
   local = FALSE
 )
 
+## Heatmaps --------------------------
+if (
+  config$analysis$active_output_group %in%
+    config$geodata$heatmap$output_groups
+) {
+  if ("bw" %in% config$geodata$heatmap$active_maps) {
+    source(
+      file.path(geodata_dir, "04_01_03_GKZ_Near_Care_Heatmap.R"),
+      local = FALSE
+    )
+  }
+
+  if ("stuttgart" %in% config$geodata$heatmap$active_maps) {
+    source(
+      file.path(geodata_dir, "04_01_04_GKZ_Near_Care_Heatmap_Stuttgart.R"),
+      local = FALSE
+    )
+  }
+}
 
 # Ergebnisse -----------------------------
 ## Tabellenmappe und Log --------------------------
-
 tc_write_excel(
   ctx,
   filename = "Geodata_Tables.xlsx"
