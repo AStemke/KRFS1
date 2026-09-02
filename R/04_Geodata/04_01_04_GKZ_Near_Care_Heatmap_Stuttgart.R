@@ -10,6 +10,11 @@ heatmap_config <- config$geodata$heatmap
 stuttgart_config <- heatmap_config$stuttgart
 map_gkz_digits <- as.integer(stuttgart_config$gkz_digits)
 map_prefix <- stuttgart_config$gkz_prefix
+map_level_label <- dplyr::case_when(
+  map_gkz_digits == 5L ~ "Kreis",
+  map_gkz_digits == 8L ~ "Gemeinde",
+  TRUE ~ paste0("GKZ-", map_gkz_digits, "-Steller")
+)
 map_linewidth <- unname(
   heatmap_config$line_width_by_digits[
     as.character(map_gkz_digits)
@@ -93,7 +98,7 @@ if (
     )
   }
 
-  gkz_geo_stuttgart <- gkz_geo |>
+  gkz_geo_stuttgart_base <- gkz_geo |>
     sf::st_transform(crs = config$geodata$crs_target) |>
     dplyr::mutate(
       gkz_join = kr_normalize_gkz(.data[[gkz_sf_key]])
@@ -101,7 +106,9 @@ if (
     dplyr::filter(
       !is.na(gkz_join),
       startsWith(gkz_join, map_prefix)
-    ) |>
+    )
+
+  gkz_geo_stuttgart <- gkz_geo_stuttgart_base |>
     dplyr::mutate(
       map_key = substr(
         gkz_join,
@@ -141,6 +148,25 @@ if (
     threshold_label_cols = "map_key"
   )
 
+  # Orientierungspunkte -----------------------------
+  ## Krebszentrumsstaedte --------------------------
+  # Die aktive Zentrenliste ist bereits entitaetsspezifisch gefiltert. Da die
+  # Geometriebasis auf GKZ 0811 begrenzt ist, bleibt auf dieser Karte nur
+  # Stuttgart als moeglicher Marker uebrig.
+  city_points <- gkz_geo_stuttgart_base |>
+    dplyr::inner_join(
+      heatmap_config$cities |>
+        dplyr::mutate(
+          gkz_join = kr_normalize_gkz(gkz_join)
+        ),
+      by = "gkz_join"
+    ) |>
+    dplyr::select(
+      city_label,
+      geometry
+    ) |>
+    sf::st_point_on_surface()
+
   # Heatmap -----------------------------
   ## Abbildung --------------------------
   p_near_care_stuttgart <- ggplot2::ggplot(
@@ -151,6 +177,25 @@ if (
       color = heatmap_config$boundary_color,
       linewidth = map_linewidth
     ) +
+    ggplot2::geom_sf(
+      data = city_points,
+      shape = 21,
+      size = heatmap_config$city_point_size,
+      stroke = heatmap_config$city_point_stroke,
+      color = "black",
+      fill = "white",
+      inherit.aes = FALSE
+    ) +
+    ggplot2::geom_sf_text(
+      data = city_points,
+      ggplot2::aes(label = city_label),
+      nudge_y = heatmap_config$city_label_nudge_y_stuttgart,
+      size = heatmap_config$city_label_size,
+      fontface = "bold",
+      color = "black",
+      check_overlap = TRUE,
+      inherit.aes = FALSE
+    ) +
     ggplot2::coord_sf(datum = NA) +
     ggplot2::scale_fill_viridis_c(
       option = "C",
@@ -160,12 +205,12 @@ if (
       name = "Anteil\nwohnortnah"
     ) +
     ggplot2::labs(
-      title = "Anteil wohnortnaher Versorgung innerhalb GKZ 0811",
-      subtitle = paste0(
-        "Achtstellige GKZ-Ebene | Default-Distanz ",
-        config$analysis$near_care_default_km,
-        " km; entitaetsspezifische Werte haben Vorrang"
-      )
+      title = paste0(
+        "Anteil wohnortnaher Versorgung nach ",
+        map_level_label,
+        " innerhalb GKZ 0811"
+      ),
+      subtitle = "GKZ 0811 | achtstellige GKZ-Ebene"
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
