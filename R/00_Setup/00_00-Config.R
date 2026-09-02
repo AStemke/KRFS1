@@ -148,10 +148,21 @@ config <- list(
     ),
 
     # Entitaeten mit separaten Auswertungsordnern.
-    focus_icd10_3 = c("C50", "C61", "C34", "C18", "C44"),
+    focus_icd10_3 = c("C50", "C61", "C18", "C20", "C83"),
 
     # Entitaeten fuer die kompakte Ergebnis-Uebersicht.
-    result_overview_icd10_3 = c("C50", "C61", "C34", "C18", "C44"),
+    result_overview_icd10_3 = c("C50", "C61", "C18", "C20", "C83"),
+
+    # Regionseinteilung fuer die Ergebnis-Uebersicht.
+    # 0811 = Stuttgart; 08 = Baden-Wuerttemberg.
+    result_overview_region = list(
+      stuttgart_gkz_prefix = "0811",
+      bw_gkz_prefix = "08",
+      label_stuttgart = "Stuttgart",
+      label_bw_other = "Baden-Wuerttemberg ohne Stuttgart",
+      label_outside_bw = "Ausserhalb Baden-Wuerttembergs",
+      label_missing = "GKZ fehlend"
+    ),
 
     # Wird im Main-Skript beim Durchlauf der Kohorten gesetzt.
     active_output_group = "Gesamt",
