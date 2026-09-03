@@ -119,18 +119,34 @@ for (group_name in names(analysis_groups)) {
     }
   )
 
-  # Leere Kohorten werden protokolliert und uebersprungen, damit ein fehlender
-  # ICD-Code nicht den gesamten Pipeline-Lauf beendet.
+  # Leere Kombinationen aus Wohnregion und ICD-Kohorte werden protokolliert
+  # und uebersprungen, damit fehlende Gruppen den Gesamtlauf nicht abbrechen.
   analysis_group_base <- kr_filter_tumor_cohort(
     tumor_base = tumor_base_all,
     icd10_3_keep = config$analysis$active_icd10_3
   )
 
+  region_config <- config$analysis$analysis_region
+  region_text <- if (isTRUE(region_config$enabled)) {
+    paste0(
+      kr_analysis_region_label(),
+      " [",
+      region_config$gkz_var,
+      " beginnt mit ",
+      region_config$gkz_prefix,
+      "]"
+    )
+  } else {
+    "keine regionale Einschraenkung"
+  }
+
   if (nrow(analysis_group_base) == 0L) {
     skip_message <- paste0(
       "Analysegruppe ",
       group_name,
-      " uebersprungen: keine Faelle in der aktiven ICD-10-Kohorte."
+      " uebersprungen: keine Faelle nach Wohnort- und ICD-Filter | ",
+      region_text,
+      "."
     )
 
     threshold_log_write(
@@ -140,6 +156,18 @@ for (group_name in names(analysis_groups)) {
     message(skip_message)
     next
   }
+
+  threshold_log_write(
+    lines = paste0(
+      "[INFO] Analysegruppe ",
+      group_name,
+      " gestartet: n_tumors=",
+      nrow(analysis_group_base),
+      " | ",
+      region_text
+    ),
+    logname = "analysis_group_status"
+  )
 
   # Deskriptive Auswertungen -----------------------------
   ## Descriptive --------------------------
