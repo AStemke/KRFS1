@@ -95,10 +95,10 @@ kr_write_result_overview <- function(tab, table_id, label_cols, ctx) {
 # Ergebnisblaetter -----------------------------
 ## Fokus-Entitaeten --------------------------
 if (identical(config$analysis$active_output_group, "Selektiv_Gesamt")) {
-  result_overview_base <- kr_apply_near_care_config(tumor_base_all) |>
-    dplyr::filter(
-      icd10_3 %in% config$analysis$result_overview_icd10_3
-    ) |>
+  result_overview_base <- kr_filter_tumor_cohort(
+    tumor_base = tumor_base_all,
+    icd10_3_keep = config$analysis$result_overview_icd10_3
+  ) |>
     dplyr::mutate(
       region = kr_result_overview_region(gkz_diagnose)
     )
