@@ -52,9 +52,9 @@ config$geodata$heatmap <- list(
     config$analysis$focus_icd10_3
   ),
 
-  # Moegliche Werte: "bw" und "stuttgart".
-  # Es kann eine oder beide Kartenvarianten ausgegeben werden.
-  active_maps = c("bw", "stuttgart"),
+  # Posterfokus: ausschliesslich Raum 0811 ausgeben.
+  # Die BW-Konfiguration bleibt fuer spaetere Auswertungen erhalten.
+  active_maps = "stuttgart",
 
   # Baden-Wuerttemberg: bisherige Darstellung auf Kreisebene.
   bw = list(
