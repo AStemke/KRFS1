@@ -57,9 +57,9 @@ center_cities_active <- center_cities_all |>
   dplyr::distinct(gkz_join, city_label)
 
 # Heatmap-Konfiguration -----------------------------
-## Regionale Ausgabe --------------------------
-regional_output <- config$analysis$regional_output
-regional_output_enabled <- !is.null(regional_output) && isTRUE(regional_output$enabled)
+## Aktive Wohnregion --------------------------
+analysis_region <- config$analysis$analysis_region
+analysis_region_enabled <- !is.null(analysis_region) && isTRUE(analysis_region$enabled)
 
 ## Kartenvarianten --------------------------
 config$geodata$heatmap <- list(
@@ -68,9 +68,9 @@ config$geodata$heatmap <- list(
     config$analysis$focus_icd10_3
   ),
 
-  # Bei aktiviertem regionalen Posterfokus wird nur die regionale Detailkarte
-  # erzeugt. Wird er deaktiviert, steht wieder die BW-Karte im Vordergrund.
-  active_maps = if (regional_output_enabled) "stuttgart" else "bw",
+  # Bei aktiviertem Wohnortfilter wird die regionale Detailkarte erzeugt.
+  # Wird der Filter deaktiviert, steht wieder die BW-Karte im Vordergrund.
+  active_maps = if (analysis_region_enabled) "stuttgart" else "bw",
 
   # Baden-Wuerttemberg: bisherige Darstellung auf Kreisebene.
   bw = list(
@@ -79,12 +79,12 @@ config$geodata$heatmap <- list(
     label = "Baden-Wuerttemberg"
   ),
 
-  # Regionale Detailkarte. Prefix und Label werden zentral in 00_00-Config.R
-  # gesteuert; die allgemeine Analysepopulation wird dadurch nicht gefiltert.
+  # Regionale Detailkarte. Prefix und Label folgen derselben zentralen
+  # Wohnortkonfiguration wie Tabellen, Grafiken und Modelle.
   stuttgart = list(
-    gkz_prefix = if (regional_output_enabled) regional_output$gkz_prefix else "0811",
+    gkz_prefix = if (analysis_region_enabled) analysis_region$gkz_prefix else "0811",
     gkz_digits = 8L,
-    label = if (regional_output_enabled) regional_output$label else "Metropolregion Stuttgart"
+    label = if (analysis_region_enabled) analysis_region$label else "Metropolregion Stuttgart"
   ),
 
   # Rueckwaertskompatible Parameter fuer die bestehende BW-Heatmap.
