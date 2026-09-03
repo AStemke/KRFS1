@@ -38,8 +38,9 @@ config <- list(
   # Datenschutz-Thresholds -----------------------------
   ## Zellunterdrueckung --------------------------
   thresholds = list(
-    # Regel: Jede ausgegebene Zellfallzahl muss entweder 0 oder >= n_min sein.
-    n_min = 3,
+    # Regel: 0 darf ausgegeben werden; Fallzahlen von 1 bis 3 werden maskiert.
+    # Erst Zellen mit mindestens 4 Faellen werden unveraendert ausgegeben.
+    n_min = 4,
     auto_regex = "^(n|N)",
     auto_require_integerish = TRUE,
     auto_exclude = character(0)
@@ -106,6 +107,7 @@ config <- list(
     "STRGESCHLECHT",
     "STRDIAGNOSEICD10",
     "GKZ_DIAGNOSE",
+    "GKZ_AKTUELL",
     "PLZ_DIAGNOSE",
     "PLZ_PATIENT",
     "PLZ_Krankenhaus",
@@ -133,17 +135,22 @@ config <- list(
   ),
 
   # Analyseparameter -----------------------------
-  ## ICD-10-Kohorten und regionale Ausgabe --------------------------
+  ## ICD-10-Kohorten und Wohnregion --------------------------
   analysis = list(
     diagnosis_year_min = NULL,
     diagnosis_year_max = NULL,
     icd10_prefix_keep = NULL,
 
-    # Regionale Ausgabe fuer Karten und explizit regionale Ergebnisblaetter.
-    # Die allgemeine Analysepopulation wird NICHT nach Diagnose-GKZ gefiltert.
-    # TRUE aktiviert den regionalen Posterfokus; FALSE laesst ihn entfallen.
-    regional_output = list(
+    # Wohnregion der Analysepopulation.
+    # Es werden nur Personen/Tumoren mit Wohnort in diesem GKZ-Prefix analysiert.
+    # Standard ist der aktuelle Wohnort, passend zur Distanzvariable, die laut
+    # Datenlegende vom aktuellen Wohnort zum Krankenhaus berechnet wird.
+    # Der Krankenhausstandort selbst wird NICHT regional gefiltert und darf
+    # deshalb ausserhalb der Metropolregion Stuttgart liegen.
+    # Fuer Wohnort zum Diagnosezeitpunkt kann gkz_var auf "gkz_diagnose" gesetzt werden.
+    analysis_region = list(
       enabled = TRUE,
+      gkz_var = "gkz_current",
       gkz_prefix = "0811",
       label = "Metropolregion Stuttgart"
     ),
@@ -163,7 +170,7 @@ config <- list(
     result_overview_icd10_3 = c("C50", "C61", "C18", "C20", "C83"),
 
     # Regionseinteilung fuer die Ergebnis-Uebersicht.
-    # 0811 = Region Stuttgart; das Ausgabelabel folgt der Projektkonvention.
+    # Wird auf die konfigurierte Wohn-GKZ angewendet.
     result_overview_region = list(
       stuttgart_gkz_prefix = "0811",
       bw_gkz_prefix = "08",
@@ -251,3 +258,7 @@ config$explore$age_labels <- config$explore$age_schemes[[active_age_scheme]]$lab
 # Distanzkonfiguration -----------------------------
 ## Rueckwaertskompatiblen Default synchronisieren --------------------------
 config$analysis$near_care_km <- config$analysis$near_care_default_km
+
+# Regionalkonfiguration -----------------------------
+## Rueckwaertskompatiblen Alias setzen --------------------------
+config$analysis$regional_output <- config$analysis$analysis_region
