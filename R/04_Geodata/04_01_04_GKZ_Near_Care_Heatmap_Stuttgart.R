@@ -1,4 +1,4 @@
-# Stuttgart-Heatmap -----------------------------
+# Metropolregion-Stuttgart-Heatmap -----------------------------
 ## Zweck --------------------------
 # Stellt den Anteil wohnortnah behandelter Tumoren nur fuer Diagnose-GKZ mit
 # Prefix 0811 dar. Gegenueber der BW-Karte wird auf die achtstellige GKZ-Ebene
@@ -93,7 +93,7 @@ if (
 
   if (length(gkz_sf_key) == 0L || is.na(gkz_sf_key)) {
     stop(
-      "In gkz_geo wurde keine geeignete GKZ-Variable fuer die Stuttgart-Heatmap gefunden.",
+      "In gkz_geo wurde keine geeignete GKZ-Variable fuer die 0811-Heatmap gefunden.",
       call. = FALSE
     )
   }
@@ -150,9 +150,9 @@ if (
 
   # Orientierungspunkte -----------------------------
   ## Krebszentrumsstaedte --------------------------
-  # Die aktive Zentrenliste ist bereits entitaetsspezifisch gefiltert. Da die
-  # Geometriebasis auf GKZ 0811 begrenzt ist, bleibt auf dieser Karte nur
-  # Stuttgart als moeglicher Marker uebrig.
+  # Die aktive Zentrenliste ist entitaetsspezifisch gefiltert. Durch den Join
+  # mit der 0811-Geometrie bleiben nur passende Staedte innerhalb der aktiven
+  # Posterregion erhalten.
   city_points <- gkz_geo_stuttgart_base |>
     dplyr::inner_join(
       heatmap_config$cities |>
@@ -193,7 +193,7 @@ if (
       size = heatmap_config$city_label_size,
       fontface = "bold",
       color = "black",
-      check_overlap = TRUE,
+      check_overlap = FALSE,
       inherit.aes = FALSE
     ) +
     ggplot2::coord_sf(datum = NA) +
@@ -208,7 +208,8 @@ if (
       title = paste0(
         "Anteil wohnortnaher Versorgung nach ",
         map_level_label,
-        " innerhalb GKZ 0811"
+        " | ",
+        stuttgart_config$label
       ),
       subtitle = paste0(
         "GKZ 0811 | achtstellige GKZ-Ebene | Wohnortnah ",
