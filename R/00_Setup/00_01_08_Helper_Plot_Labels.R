@@ -1,10 +1,9 @@
 # Abbildungsbeschriftungen -----------------------------
-## Kohorte und Distanzgrenze im Titel --------------------------
-# Erweitert die bestehende Beschriftungslogik. Bei Abbildungen zur wohnortnahen
-# Versorgung wird die tatsaechlich fuer die aktive Kohorte verwendete
-# Distanzkonfiguration im Titel genannt. Alte Default-Angaben im Untertitel
-# werden entfernt, damit bei entitaetsspezifischen Grenzen kein Widerspruch
-# zwischen Berechnung und Beschriftung entsteht.
+## Kohorte, Region und Distanzgrenze --------------------------
+# Erweitert die bestehende Beschriftungslogik. Alle Abbildungen erhalten bei
+# aktiviertem Regionalfilter die aktive Analyseregion. Bei Abbildungen zur
+# wohnortnahen Versorgung wird zusaetzlich die tatsaechlich verwendete
+# Distanzkonfiguration im Titel genannt.
 
 tc_add_analysis_label_to_plot <- function(plot, analysis_label) {
   current_title <- plot$labels$title
@@ -51,6 +50,23 @@ tc_add_analysis_label_to_plot <- function(plot, analysis_label) {
       perl = TRUE
     )
     current_subtitle <- trimws(current_subtitle)
+  }
+
+  # Die aktive Analyseregion wird in allen Abbildungen sichtbar dokumentiert.
+  if (exists("kr_analysis_region_label", mode = "function")) {
+    region_label <- kr_analysis_region_label()
+    region_already_shown <- nzchar(region_label) && (
+      grepl(region_label, current_title, fixed = TRUE) ||
+        grepl(region_label, current_subtitle, fixed = TRUE)
+    )
+
+    if (nzchar(region_label) && !region_already_shown) {
+      current_subtitle <- if (nzchar(current_subtitle)) {
+        paste(current_subtitle, region_label, sep = " | ")
+      } else {
+        region_label
+      }
+    }
   }
 
   title_prefix <- paste0(analysis_label, ": ")
