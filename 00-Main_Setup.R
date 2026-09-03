@@ -119,6 +119,36 @@ for (group_name in names(analysis_groups)) {
     }
   )
 
+  # Gruppenordner -----------------------------
+  ## Fuer jede konfigurierte Analysegruppe anlegen --------------------------
+  # Der Ordner wird vor der Fallzahlpruefung erzeugt. Dadurch bleiben auch
+  # Fokus-ICDs ohne Faelle in der aktiven Wohnregion als erwartete
+  # Analysegruppen im Output sichtbar; der Grund fuer das Ueberspringen steht
+  # weiterhin im zentralen analysis_group_status-Log.
+  group_output_dir <- file.path(
+    config$paths$current_wd,
+    "output",
+    group_name
+  )
+
+  if (!dir.exists(group_output_dir)) {
+    created <- dir.create(
+      group_output_dir,
+      recursive = FALSE,
+      showWarnings = FALSE
+    )
+
+    if (!isTRUE(created) && !dir.exists(group_output_dir)) {
+      stop(
+        paste0(
+          "Output-Ordner fuer Analysegruppe konnte nicht angelegt werden:\n",
+          group_output_dir
+        ),
+        call. = FALSE
+      )
+    }
+  }
+
   # Leere Kombinationen aus Wohnregion und ICD-Kohorte werden protokolliert
   # und uebersprungen, damit fehlende Gruppen den Gesamtlauf nicht abbrechen.
   analysis_group_base <- kr_filter_tumor_cohort(
