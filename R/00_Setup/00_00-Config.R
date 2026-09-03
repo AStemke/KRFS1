@@ -133,11 +133,20 @@ config <- list(
   ),
 
   # Analyseparameter -----------------------------
-  ## ICD-10-Kohorten und Distanz --------------------------
+  ## ICD-10-Kohorten und Region --------------------------
   analysis = list(
     diagnosis_year_min = NULL,
     diagnosis_year_max = NULL,
     icd10_prefix_keep = NULL,
+
+    # Globale Analyseregion fuer Tabellen, Grafiken, Karten und Modelle.
+    # TRUE filtert ueber die Diagnose-GKZ; FALSE wertet wieder alle Regionen aus.
+    # Das Prefix kann z.B. auf "08" fuer Baden-Wuerttemberg geaendert werden.
+    analysis_region = list(
+      enabled = TRUE,
+      gkz_prefix = "0811",
+      label = "Metropolregion Stuttgart"
+    ),
 
     # Selektive Gesamtpopulation gemaess Projektbeschreibung.
     project_icd10_3 = c(
@@ -154,12 +163,12 @@ config <- list(
     result_overview_icd10_3 = c("C50", "C61", "C18", "C20", "C83"),
 
     # Regionseinteilung fuer die Ergebnis-Uebersicht.
-    # 0811 = Stuttgart; 08 = Baden-Wuerttemberg.
+    # 0811 = Region Stuttgart; das Ausgabelabel folgt der Projektkonvention.
     result_overview_region = list(
       stuttgart_gkz_prefix = "0811",
       bw_gkz_prefix = "08",
-      label_stuttgart = "Stuttgart",
-      label_bw_other = "Baden-Wuerttemberg ohne Stuttgart",
+      label_stuttgart = "Metropolregion Stuttgart",
+      label_bw_other = "Baden-Wuerttemberg ohne Metropolregion Stuttgart",
       label_outside_bw = "Ausserhalb Baden-Wuerttembergs",
       label_missing = "GKZ fehlend"
     ),
