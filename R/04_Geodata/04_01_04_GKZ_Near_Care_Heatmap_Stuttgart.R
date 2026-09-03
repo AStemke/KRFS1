@@ -1,15 +1,17 @@
 # Metropolregion-Stuttgart-Heatmap -----------------------------
 ## Zweck --------------------------
-# Stellt den Anteil wohnortnah behandelter Tumoren nur fuer Diagnose-GKZ mit
-# Prefix 0811 dar. Gegenueber der BW-Karte wird auf die achtstellige GKZ-Ebene
-# und damit auf die feinste Ebene der aktuell eingebundenen Gemeindedatei gegangen.
+# Stellt den Anteil wohnortnah behandelter Tumoren fuer Personen mit Wohnort
+# innerhalb des konfigurierten GKZ-Prefix dar. Der Krankenhausstandort darf
+# ausserhalb der Region liegen; die Distanz bleibt dadurch voll beruecksichtigt.
 
 # Konfiguration -----------------------------
 ## Kartenparameter --------------------------
 heatmap_config <- config$geodata$heatmap
 stuttgart_config <- heatmap_config$stuttgart
+region_config <- config$analysis$analysis_region
 map_gkz_digits <- as.integer(stuttgart_config$gkz_digits)
-map_prefix <- stuttgart_config$gkz_prefix
+map_prefix <- region_config$gkz_prefix
+residence_gkz_var <- region_config$gkz_var
 map_level_label <- dplyr::case_when(
   map_gkz_digits == 5L ~ "Kreis",
   map_gkz_digits == 8L ~ "Gemeinde",
@@ -21,11 +23,22 @@ map_linewidth <- unname(
   ]
 )
 
+if (!residence_gkz_var %in% names(tumor_base)) {
+  stop(
+    paste0(
+      "Fuer die regionale Heatmap fehlt die konfigurierte Wohn-GKZ `",
+      residence_gkz_var,
+      "`."
+    ),
+    call. = FALSE
+  )
+}
+
 # Datenbasis -----------------------------
-## Diagnose-GKZ 0811 --------------------------
+## Wohn-GKZ der Analysepopulation --------------------------
 tumor_stuttgart_heatmap <- tumor_base |>
   dplyr::mutate(
-    gkz_join = kr_normalize_gkz(gkz_diagnose)
+    gkz_join = kr_normalize_gkz(.data[[residence_gkz_var]])
   ) |>
   dplyr::filter(
     !is.na(gkz_join),
@@ -77,7 +90,7 @@ ctx <- tc_write_table(
 )
 
 # Kartenbasis -----------------------------
-## Geometrien auf GKZ 0811 begrenzen --------------------------
+## Geometrien auf aktive Wohnregion begrenzen --------------------------
 if (
   exists("gkz_geo") &&
     !is.null(gkz_geo) &&
@@ -93,7 +106,7 @@ if (
 
   if (length(gkz_sf_key) == 0L || is.na(gkz_sf_key)) {
     stop(
-      "In gkz_geo wurde keine geeignete GKZ-Variable fuer die 0811-Heatmap gefunden.",
+      "In gkz_geo wurde keine geeignete GKZ-Variable fuer die regionale Heatmap gefunden.",
       call. = FALSE
     )
   }
@@ -129,7 +142,7 @@ if (
       by = "map_key"
     )
 
-  # Diagnose-GKZ, die trotz Prefix 0811 nicht in der Geometriedatei liegen.
+  # Wohn-GKZ, die trotz Prefix nicht in der Geometriedatei liegen.
   stuttgart_not_mapped <- stuttgart_near_care_tab |>
     dplyr::anti_join(
       gkz_geo_stuttgart |>
@@ -151,8 +164,8 @@ if (
   # Orientierungspunkte -----------------------------
   ## Krebszentrumsstaedte --------------------------
   # Die aktive Zentrenliste ist entitaetsspezifisch gefiltert. Durch den Join
-  # mit der 0811-Geometrie bleiben nur passende Staedte innerhalb der aktiven
-  # Posterregion erhalten.
+  # mit der Regionsgeometrie bleiben nur passende Staedte innerhalb des
+  # dargestellten Wohngebiets erhalten.
   city_points <- gkz_geo_stuttgart_base |>
     dplyr::inner_join(
       heatmap_config$cities |>
@@ -209,10 +222,12 @@ if (
         "Anteil wohnortnaher Versorgung nach ",
         map_level_label,
         " | ",
-        stuttgart_config$label
+        kr_analysis_region_label()
       ),
       subtitle = paste0(
-        "GKZ 0811 | achtstellige GKZ-Ebene | Wohnortnah ",
+        "Wohn-GKZ ",
+        map_prefix,
+        " | achtstellige GKZ-Ebene | Wohnortnah ",
         kr_near_care_distance_label()
       )
     ) +
