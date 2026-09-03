@@ -210,7 +210,10 @@ if (
         map_level_label,
         " innerhalb GKZ 0811"
       ),
-      subtitle = "GKZ 0811 | achtstellige GKZ-Ebene"
+      subtitle = paste0(
+        "GKZ 0811 | achtstellige GKZ-Ebene | Wohnortnah ",
+        kr_near_care_distance_label()
+      )
     ) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
