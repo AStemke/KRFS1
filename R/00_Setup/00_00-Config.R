@@ -133,16 +133,16 @@ config <- list(
   ),
 
   # Analyseparameter -----------------------------
-  ## ICD-10-Kohorten und Region --------------------------
+  ## ICD-10-Kohorten und regionale Ausgabe --------------------------
   analysis = list(
     diagnosis_year_min = NULL,
     diagnosis_year_max = NULL,
     icd10_prefix_keep = NULL,
 
-    # Globale Analyseregion fuer Tabellen, Grafiken, Karten und Modelle.
-    # TRUE filtert ueber die Diagnose-GKZ; FALSE wertet wieder alle Regionen aus.
-    # Das Prefix kann z.B. auf "08" fuer Baden-Wuerttemberg geaendert werden.
-    analysis_region = list(
+    # Regionale Ausgabe fuer Karten und explizit regionale Ergebnisblaetter.
+    # Die allgemeine Analysepopulation wird NICHT nach Diagnose-GKZ gefiltert.
+    # TRUE aktiviert den regionalen Posterfokus; FALSE laesst ihn entfallen.
+    regional_output = list(
       enabled = TRUE,
       gkz_prefix = "0811",
       label = "Metropolregion Stuttgart"
