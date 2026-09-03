@@ -5,10 +5,10 @@
 # Gesamtwerte sowie Stratifizierungen nach Diagnosejahr und Wohnregion.
 
 # Hilfsfunktionen -----------------------------
-## Wohnregion aus Diagnose-GKZ ableiten --------------------------
-kr_result_overview_region <- function(gkz_diagnose) {
+## Wohnregion aus konfigurierter Wohn-GKZ ableiten --------------------------
+kr_result_overview_region <- function(gkz_residence) {
   region_config <- config$analysis$result_overview_region
-  gkz <- kr_normalize_gkz(gkz_diagnose)
+  gkz <- kr_normalize_gkz(gkz_residence)
 
   dplyr::case_when(
     is.na(gkz) | gkz == "00000000" ~ region_config$label_missing,
@@ -98,9 +98,23 @@ if (identical(config$analysis$active_output_group, "Selektiv_Gesamt")) {
   result_overview_base <- kr_filter_tumor_cohort(
     tumor_base = tumor_base_all,
     icd10_3_keep = config$analysis$result_overview_icd10_3
-  ) |>
+  )
+
+  residence_gkz_var <- config$analysis$analysis_region$gkz_var
+  if (!residence_gkz_var %in% names(result_overview_base)) {
+    stop(
+      paste0(
+        "Fuer die Ergebnisuebersicht fehlt die konfigurierte Wohn-GKZ `",
+        residence_gkz_var,
+        "`."
+      ),
+      call. = FALSE
+    )
+  }
+
+  result_overview_base <- result_overview_base |>
     dplyr::mutate(
-      region = kr_result_overview_region(gkz_diagnose)
+      region = kr_result_overview_region(.data[[residence_gkz_var]])
     )
 
   # Gesamt je Entitaet.
