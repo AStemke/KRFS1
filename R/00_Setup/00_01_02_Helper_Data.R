@@ -142,21 +142,31 @@ kr_normalize_plz <- function(x) {
   ifelse(!is.na(x), stringr::str_pad(x, width = 5, side = "left", pad = "0"), NA_character_)
 }
 
-## Regionale Ausgabe filtern --------------------------
-# Diese Funktion ist nur fuer explizit regionale Tabellen oder Karten gedacht.
-# Die allgemeine Analysepopulation wird dadurch nicht eingeschraenkt.
-kr_filter_regional_output <- function(tumor_base) {
+## Aktive Wohnregion filtern --------------------------
+kr_filter_analysis_region <- function(tumor_base) {
   stopifnot(is.data.frame(tumor_base))
 
-  region_config <- config$analysis$regional_output
+  region_config <- config$analysis$analysis_region
 
   if (is.null(region_config) || !isTRUE(region_config$enabled)) {
     return(tumor_base)
   }
 
-  if (!"gkz_diagnose" %in% names(tumor_base)) {
+  gkz_var <- as.character(region_config$gkz_var)[1L]
+  if (is.na(gkz_var) || !nzchar(trimws(gkz_var))) {
     stop(
-      "Fuer die regionale Ausgabe fehlt `gkz_diagnose` in der Tumorbasis.",
+      "config$analysis$analysis_region$gkz_var darf bei aktiviertem Regionalfilter nicht leer sein.",
+      call. = FALSE
+    )
+  }
+
+  if (!gkz_var %in% names(tumor_base)) {
+    stop(
+      paste0(
+        "Fuer den Wohnortfilter fehlt `",
+        gkz_var,
+        "` in der Tumorbasis."
+      ),
       call. = FALSE
     )
   }
@@ -164,20 +174,20 @@ kr_filter_regional_output <- function(tumor_base) {
   gkz_prefix <- as.character(region_config$gkz_prefix)[1L]
   if (is.na(gkz_prefix) || !nzchar(trimws(gkz_prefix))) {
     stop(
-      "config$analysis$regional_output$gkz_prefix darf bei aktivierter Regionalausgabe nicht leer sein.",
+      "config$analysis$analysis_region$gkz_prefix darf bei aktiviertem Regionalfilter nicht leer sein.",
       call. = FALSE
     )
   }
 
-  gkz <- kr_normalize_gkz(tumor_base$gkz_diagnose)
+  gkz <- kr_normalize_gkz(tumor_base[[gkz_var]])
   keep <- !is.na(gkz) & startsWith(gkz, gkz_prefix)
 
   tumor_base[keep, , drop = FALSE]
 }
 
-## Regionale Ausgabe beschriften --------------------------
-kr_regional_output_label <- function() {
-  region_config <- config$analysis$regional_output
+## Aktive Wohnregion beschriften --------------------------
+kr_analysis_region_label <- function() {
+  region_config <- config$analysis$analysis_region
 
   if (is.null(region_config) || !isTRUE(region_config$enabled)) {
     return("")
@@ -191,6 +201,10 @@ kr_regional_output_label <- function() {
   region_label
 }
 
+## Rueckwaertskompatible Regionalhelper --------------------------
+kr_filter_regional_output <- kr_filter_analysis_region
+kr_regional_output_label <- kr_analysis_region_label
+
 # Mathematische Helper -----------------------------
 ## Sichere Division --------------------------
 safe_divide <- function(num, den) {
@@ -198,7 +212,7 @@ safe_divide <- function(num, den) {
 }
 
 # Analyse-Kohorten -----------------------------
-## Tumorbasis nach ICD-10 filtern --------------------------
+## Tumorbasis nach Wohnregion und ICD-10 filtern --------------------------
 kr_filter_tumor_cohort <- function(tumor_base, icd10_3_keep = character(0)) {
   stopifnot(is.data.frame(tumor_base), "icd10_3" %in% names(tumor_base))
 
@@ -209,18 +223,18 @@ kr_filter_tumor_cohort <- function(tumor_base, icd10_3_keep = character(0)) {
     tumor_base <- kr_apply_near_care_config(tumor_base)
   }
 
-  # Die Diagnose-GKZ wird hier bewusst NICHT regional gefiltert. Auch Faelle
-  # ausserhalb der Posterregion bleiben in Descriptive, Access und Stats erhalten;
-  # ihre Distanz ist Teil der Versorgungsanalyse.
   icd10_3_keep <- unique(toupper(trimws(as.character(icd10_3_keep))))
   icd10_3_keep <- icd10_3_keep[!is.na(icd10_3_keep) & nzchar(icd10_3_keep)]
 
-  if (length(icd10_3_keep) == 0L) {
-    return(tumor_base)
+  if (length(icd10_3_keep) > 0L) {
+    tumor_base <- tumor_base |>
+      dplyr::filter(icd10_3 %in% icd10_3_keep)
   }
 
-  tumor_base |>
-    dplyr::filter(icd10_3 %in% icd10_3_keep)
+  # Der Wohnortfilter bezieht sich ausschliesslich auf die Analysepopulation.
+  # Krankenhausstandort und Distanz bleiben unveraendert, sodass Behandlungen
+  # ausserhalb des Zielgebiets weiterhin als entsprechend weite Wege eingehen.
+  kr_filter_analysis_region(tumor_base)
 }
 
 ## Patientenbasis aus gefilterter Tumorbasis neu bilden --------------------------
@@ -236,6 +250,7 @@ kr_build_patient_base <- function(tumor_base) {
       sex = first_non_missing(sex),
       age_at_first_diag = first_non_missing(age_at_diag),
       first_gkz_diagnose = first_non_missing(gkz_diagnose),
+      first_gkz_current = first_non_missing(gkz_current),
       min_distance_km = suppressWarnings(min(distance_km, na.rm = TRUE)),
       any_near_care = any(near_care, na.rm = TRUE),
       .groups = "drop"
