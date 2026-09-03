@@ -57,6 +57,10 @@ center_cities_active <- center_cities_all |>
   dplyr::distinct(gkz_join, city_label)
 
 # Heatmap-Konfiguration -----------------------------
+## Regionale Ausgabe --------------------------
+regional_output <- config$analysis$regional_output
+regional_output_enabled <- !is.null(regional_output) && isTRUE(regional_output$enabled)
+
 ## Kartenvarianten --------------------------
 config$geodata$heatmap <- list(
   output_groups = c(
@@ -64,9 +68,9 @@ config$geodata$heatmap <- list(
     config$analysis$focus_icd10_3
   ),
 
-  # Posterfokus: ausschliesslich Raum 0811 ausgeben.
-  # Die BW-Konfiguration bleibt fuer spaetere Auswertungen erhalten.
-  active_maps = "stuttgart",
+  # Bei aktiviertem regionalen Posterfokus wird nur die regionale Detailkarte
+  # erzeugt. Wird er deaktiviert, steht wieder die BW-Karte im Vordergrund.
+  active_maps = if (regional_output_enabled) "stuttgart" else "bw",
 
   # Baden-Wuerttemberg: bisherige Darstellung auf Kreisebene.
   bw = list(
@@ -75,12 +79,12 @@ config$geodata$heatmap <- list(
     label = "Baden-Wuerttemberg"
   ),
 
-  # GKZ 0811 entspricht administrativ der Region Stuttgart. Fuer das Poster
-  # wird gemaess Projektkonvention die Bezeichnung Metropolregion Stuttgart genutzt.
+  # Regionale Detailkarte. Prefix und Label werden zentral in 00_00-Config.R
+  # gesteuert; die allgemeine Analysepopulation wird dadurch nicht gefiltert.
   stuttgart = list(
-    gkz_prefix = "0811",
+    gkz_prefix = if (regional_output_enabled) regional_output$gkz_prefix else "0811",
     gkz_digits = 8L,
-    label = "Metropolregion Stuttgart"
+    label = if (regional_output_enabled) regional_output$label else "Metropolregion Stuttgart"
   ),
 
   # Rueckwaertskompatible Parameter fuer die bestehende BW-Heatmap.
