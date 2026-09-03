@@ -142,6 +142,53 @@ kr_normalize_plz <- function(x) {
   ifelse(!is.na(x), stringr::str_pad(x, width = 5, side = "left", pad = "0"), NA_character_)
 }
 
+## Aktive Analyseregion filtern --------------------------
+kr_filter_analysis_region <- function(tumor_base) {
+  stopifnot(is.data.frame(tumor_base))
+
+  region_config <- config$analysis$analysis_region
+
+  if (is.null(region_config) || !isTRUE(region_config$enabled)) {
+    return(tumor_base)
+  }
+
+  if (!"gkz_diagnose" %in% names(tumor_base)) {
+    stop(
+      "Fuer den regionalen Analysefilter fehlt `gkz_diagnose` in der Tumorbasis.",
+      call. = FALSE
+    )
+  }
+
+  gkz_prefix <- as.character(region_config$gkz_prefix)[1L]
+  if (is.na(gkz_prefix) || !nzchar(trimws(gkz_prefix))) {
+    stop(
+      "config$analysis$analysis_region$gkz_prefix darf bei aktiviertem Regionalfilter nicht leer sein.",
+      call. = FALSE
+    )
+  }
+
+  gkz <- kr_normalize_gkz(tumor_base$gkz_diagnose)
+  keep <- !is.na(gkz) & startsWith(gkz, gkz_prefix)
+
+  tumor_base[keep, , drop = FALSE]
+}
+
+## Aktive Analyseregion beschriften --------------------------
+kr_analysis_region_label <- function() {
+  region_config <- config$analysis$analysis_region
+
+  if (is.null(region_config) || !isTRUE(region_config$enabled)) {
+    return("")
+  }
+
+  region_label <- as.character(region_config$label)[1L]
+  if (is.na(region_label) || !nzchar(trimws(region_label))) {
+    return(paste0("GKZ ", region_config$gkz_prefix))
+  }
+
+  region_label
+}
+
 # Mathematische Helper -----------------------------
 ## Sichere Division --------------------------
 safe_divide <- function(num, den) {
@@ -149,7 +196,7 @@ safe_divide <- function(num, den) {
 }
 
 # Analyse-Kohorten -----------------------------
-## Tumorbasis nach ICD-10 filtern --------------------------
+## Tumorbasis nach Region und ICD-10 filtern --------------------------
 kr_filter_tumor_cohort <- function(tumor_base, icd10_3_keep = character(0)) {
   stopifnot(is.data.frame(tumor_base), "icd10_3" %in% names(tumor_base))
 
@@ -159,6 +206,10 @@ kr_filter_tumor_cohort <- function(tumor_base, icd10_3_keep = character(0)) {
   if (exists("kr_apply_near_care_config", mode = "function")) {
     tumor_base <- kr_apply_near_care_config(tumor_base)
   }
+
+  # Der Regionalfilter wird zentral angewendet, damit Descriptive, Access,
+  # Geodata und Stats immer dieselbe raeumliche Analysepopulation verwenden.
+  tumor_base <- kr_filter_analysis_region(tumor_base)
 
   icd10_3_keep <- unique(toupper(trimws(as.character(icd10_3_keep))))
   icd10_3_keep <- icd10_3_keep[!is.na(icd10_3_keep) & nzchar(icd10_3_keep)]
