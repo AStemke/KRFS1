@@ -6,22 +6,31 @@
 
 # Krebszentrumsstaedte -----------------------------
 ## Referenz --------------------------
-# Stadtmarker fuer die Fokus-Entitaeten auf Basis der im OnkoZert-
-# Jahresbericht 2024 aufgefuehrten zertifizierten Zentren (Stand 31.12.2023).
+# Stadtmarker fuer die Fokus-Entitaeten. Die Standorte innerhalb GKZ 0811
+# wurden anhand des OnkoZert-Jahresberichts Onkologische Zentren 2025 fuer
+# Darm, haematologische Neoplasien, Brust und Prostata vervollstaendigt.
+# C18 und C20 werden dabei gemeinsam durch die Kategorie Darm abgebildet.
+# Transfer-/Transit-Standorte werden nicht als Zentrum der Entitaet gewertet.
 # Auf den Karten wird nur der Stadtname dargestellt; der Klinikname bleibt
 # hier als dokumentierende Referenz erhalten.
 center_cities_all <- tibble::tribble(
-  ~gkz_join,  ~city_label,          ~center_name,                                  ~icd10_3,
-  "08111000", "Stuttgart",         "Klinikum Stuttgart Katharinenhospital",       "C18;C20;C50;C61;C83",
-  "08311000", "Freiburg",          "Universitaet Freiburg",                       "C18;C20;C50;C61;C83",
-  "08221000", "Heidelberg",        "Universitaet Heidelberg",                     "C18;C20;C50;C61",
-  "08222000", "Mannheim",          "Universitaet Mannheim",                       "C18;C20;C50;C61",
-  "08416041", "Tuebingen",         "Universitaet Tuebingen",                      "C18;C20;C50;C61;C83",
-  "08421000", "Ulm",               "Universitaet Ulm",                            "C18;C20;C50;C61;C83",
-  "08212000", "Karlsruhe",         "Staedtisches Klinikum Karlsruhe",              "C18;C20;C50;C61;C83",
-  "08136065", "Schwaebisch Gmuend", "Stauferklinikum Schwaebisch Gmuend",          "C18;C20;C50;C83",
-  "08117026", "Goeppingen",        "Klinik am Eichert Goeppingen",                "C18;C20;C50;C61",
-  "08231000", "Pforzheim",          "Siloah St. Trudpert Klinikum",                "C18;C20;C50;C61"
+  ~gkz_join,  ~city_label,             ~center_name,                                      ~icd10_3,
+  "08111000", "Stuttgart",            "Klinikum Stuttgart, Katharinenhospital",          "C18;C20;C50;C61;C83",
+  "08115003", "Boeblingen",            "Klinikverbund Suedwest Kliniken Boeblingen",       "C18;C20;C50",
+  "08115045", "Sindelfingen",         "Klinikverbund Suedwest Kliniken Sindelfingen",    "C61;C83",
+  "08116019", "Esslingen",            "Klinikum Esslingen",                              "C18;C20;C50;C83",
+  "08116080", "Ostfildern",           "medius KLINIK OSTFILDERN-RUIT",                    "C18;C20;C50;C61",
+  "08117026", "Goeppingen",           "ALB FILS KLINIKUM Goeppingen",                     "C18;C20;C50;C61",
+  "08118048", "Ludwigsburg",          "Klinikum Ludwigsburg",                            "C18;C20;C50;C61",
+  "08119085", "Winnenden",            "Rems-Murr-Klinikum Winnenden",                     "C18;C20;C50;C61;C83",
+  "08311000", "Freiburg",             "Universitaet Freiburg",                           "C18;C20;C50;C61;C83",
+  "08221000", "Heidelberg",           "Universitaet Heidelberg",                         "C18;C20;C50;C61",
+  "08222000", "Mannheim",             "Universitaet Mannheim",                           "C18;C20;C50;C61",
+  "08416041", "Tuebingen",            "Universitaet Tuebingen",                          "C18;C20;C50;C61;C83",
+  "08421000", "Ulm",                  "Universitaet Ulm",                                "C18;C20;C50;C61;C83",
+  "08212000", "Karlsruhe",            "Staedtisches Klinikum Karlsruhe",                  "C18;C20;C50;C61;C83",
+  "08136065", "Schwaebisch Gmuend",   "Stauferklinikum Schwaebisch Gmuend",              "C18;C20;C50;C83",
+  "08231000", "Pforzheim",             "Siloah St. Trudpert Klinikum",                    "C18;C20;C50;C61"
 )
 
 ## Aktive Entitaeten --------------------------
@@ -63,12 +72,12 @@ config$geodata$heatmap <- list(
     label = "Baden-Wuerttemberg"
   ),
 
-  # Stuttgart: nur Diagnose-GKZ mit Prefix 0811 und eine Ebene feiner.
-  # Mit der derzeitigen Gemeindedatei bedeutet dies die achtstellige GKZ-Ebene.
+  # GKZ 0811 entspricht administrativ der Region Stuttgart. Fuer das Poster
+  # wird gemaess Projektkonvention die Bezeichnung Metropolregion Stuttgart genutzt.
   stuttgart = list(
     gkz_prefix = "0811",
     gkz_digits = 8L,
-    label = "GKZ 0811"
+    label = "Metropolregion Stuttgart"
   ),
 
   # Rueckwaertskompatible Parameter fuer die bestehende BW-Heatmap.
@@ -84,7 +93,7 @@ config$geodata$heatmap <- list(
   # Einheitliche Darstellung der Krebszentrumsstaedte.
   city_point_size = 2.4,
   city_point_stroke = 0.6,
-  city_label_size = 3.2,
+  city_label_size = 2.8,
   city_label_nudge_y = 5500,
   city_label_nudge_y_stuttgart = 900,
 
