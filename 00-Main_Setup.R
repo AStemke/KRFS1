@@ -103,6 +103,58 @@ analysis_groups <- c(
   focus_groups
 )
 
+# Status-Log -----------------------------
+## Einen gemeinsamen Log pro Pipeline-Lauf anlegen --------------------------
+analysis_run_started_at <- Sys.time()
+analysis_group_status_log <- make_logfile_path(
+  logname = paste0(
+    "analysis_group_status_",
+    format(
+      analysis_run_started_at,
+      format = "%H%M%S",
+      tz = "Europe/Berlin"
+    )
+  ),
+  base_dir = file.path(
+    config$paths$current_wd,
+    "output",
+    "logfiles"
+  ),
+  time = analysis_run_started_at,
+  tz = "Europe/Berlin"
+)
+
+write_analysis_group_status <- function(message, level = "INFO") {
+  timestamp <- format(
+    Sys.time(),
+    tz = "Europe/Berlin",
+    usetz = FALSE
+  )
+
+  cat(
+    paste0(
+      "[",
+      timestamp,
+      "] [",
+      level,
+      "] ",
+      message,
+      "\n"
+    ),
+    file = analysis_group_status_log,
+    append = TRUE
+  )
+
+  invisible(analysis_group_status_log)
+}
+
+write_analysis_group_status(
+  paste0(
+    "Pipeline-Lauf gestartet | Analysegruppen: ",
+    paste(names(analysis_groups), collapse = ", ")
+  )
+)
+
 # Auswertungen -----------------------------
 ## Alle Analysebereiche je Kohorte durchlaufen --------------------------
 for (group_name in names(analysis_groups)) {
@@ -179,24 +231,20 @@ for (group_name in names(analysis_groups)) {
       "."
     )
 
-    threshold_log_write(
-      lines = paste0("[INFO] ", skip_message),
-      logname = "analysis_group_status"
-    )
+    write_analysis_group_status(skip_message)
     message(skip_message)
     next
   }
 
-  threshold_log_write(
-    lines = paste0(
-      "[INFO] Analysegruppe ",
+  write_analysis_group_status(
+    paste0(
+      "Analysegruppe ",
       group_name,
       " gestartet: n_tumors=",
       nrow(analysis_group_base),
       " | ",
       region_text
-    ),
-    logname = "analysis_group_status"
+    )
   )
 
   # Deskriptive Auswertungen -----------------------------
@@ -218,7 +266,17 @@ for (group_name in names(analysis_groups)) {
   ## Tests und Modelle --------------------------
   source_krfs1("05_Stats", "05_00-Stats_Setup.R")
   source_krfs1("05_Stats", "05_01-Stats_Sourcing.R")
+
+  write_analysis_group_status(
+    paste0(
+      "Analysegruppe ",
+      group_name,
+      " abgeschlossen."
+    )
+  )
 }
+
+write_analysis_group_status("Pipeline-Lauf abgeschlossen.")
 
 # Abschluss -----------------------------
 ## Gesamtbasis als aktive Basis wiederherstellen --------------------------
