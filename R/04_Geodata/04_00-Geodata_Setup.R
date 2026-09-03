@@ -7,21 +7,24 @@
 # Krebszentrumsstaedte -----------------------------
 ## Referenz --------------------------
 # Stadtmarker fuer die Fokus-Entitaeten. Die Standorte innerhalb GKZ 0811
-# wurden anhand des OnkoZert-Jahresberichts Onkologische Zentren 2025 fuer
+# wurden anhand des OnkoZert-Jahresberichts und aktueller Klinikangaben fuer
 # Darm, haematologische Neoplasien, Brust und Prostata vervollstaendigt.
 # C18 und C20 werden dabei gemeinsam durch die Kategorie Darm abgebildet.
 # Transfer-/Transit-Standorte werden nicht als Zentrum der Entitaet gewertet.
-# Auf den Karten wird nur der Stadtname dargestellt; der Klinikname bleibt
-# hier als dokumentierende Referenz erhalten.
+# Bei standortuebergreifenden zertifizierten Zentren werden die beteiligten
+# Klinikstandorte aufgenommen. Auf den Karten wird nur der Stadtname dargestellt;
+# der Klinikname bleibt hier als dokumentierende Referenz erhalten.
 center_cities_all <- tibble::tribble(
   ~gkz_join,  ~city_label,             ~center_name,                                      ~icd10_3,
   "08111000", "Stuttgart",            "Klinikum Stuttgart, Katharinenhospital",          "C18;C20;C50;C61;C83",
   "08115003", "Boeblingen",            "Klinikverbund Suedwest Kliniken Boeblingen",       "C18;C20;C50",
   "08115045", "Sindelfingen",         "Klinikverbund Suedwest Kliniken Sindelfingen",    "C61;C83",
   "08116019", "Esslingen",            "Klinikum Esslingen",                              "C18;C20;C50;C83",
+  "08116049", "Nuertingen",            "medius KLINIK NUERTINGEN",                         "C18;C20;C50",
   "08116080", "Ostfildern",           "medius KLINIK OSTFILDERN-RUIT",                    "C18;C20;C50;C61",
   "08117026", "Goeppingen",           "ALB FILS KLINIKUM Goeppingen",                     "C18;C20;C50;C61",
   "08118048", "Ludwigsburg",          "Klinikum Ludwigsburg",                            "C18;C20;C50;C61",
+  "08118079", "Bietigheim-Bissingen",  "RKH Krankenhaus Bietigheim-Vaihingen",             "C18;C20;C50",
   "08119085", "Winnenden",            "Rems-Murr-Klinikum Winnenden",                     "C18;C20;C50;C61;C83",
   "08311000", "Freiburg",             "Universitaet Freiburg",                           "C18;C20;C50;C61;C83",
   "08221000", "Heidelberg",           "Universitaet Heidelberg",                         "C18;C20;C50;C61",
