@@ -171,9 +171,13 @@ config <- list(
     # Default fuer Entitaeten ohne eigenen Grenzwert.
     near_care_default_km = 25,
 
-    # Optionale entitaetsspezifische Grenzwerte. Weitere ICD-10-Codes koennen
-    # einfach als benannte Werte ergaenzt werden, z.B. c(C50 = 20, C61 = 30).
-    near_care_km_by_icd = c(),
+    # Entitaetsspezifische Grenzwerte fuer die drei Poster-Fokusentitaeten.
+    # C20, C83 und alle weiteren Entitaeten nutzen den Default.
+    near_care_km_by_icd = c(
+      C50 = 7,
+      C61 = 8,
+      C18 = 9
+    ),
 
     # Rueckwaertskompatibler Alias fuer Skripte, die nur einen Wert anzeigen.
     near_care_km = 25,
