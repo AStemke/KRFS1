@@ -119,6 +119,28 @@ for (group_name in names(analysis_groups)) {
     }
   )
 
+  # Leere Kohorten werden protokolliert und uebersprungen, damit ein fehlender
+  # ICD-Code nicht den gesamten Pipeline-Lauf beendet.
+  analysis_group_base <- kr_filter_tumor_cohort(
+    tumor_base = tumor_base_all,
+    icd10_3_keep = config$analysis$active_icd10_3
+  )
+
+  if (nrow(analysis_group_base) == 0L) {
+    skip_message <- paste0(
+      "Analysegruppe ",
+      group_name,
+      " uebersprungen: keine Faelle in der aktiven ICD-10-Kohorte."
+    )
+
+    threshold_log_write(
+      lines = paste0("[INFO] ", skip_message),
+      logname = "analysis_group_status"
+    )
+    message(skip_message)
+    next
+  }
+
   # Deskriptive Auswertungen -----------------------------
   ## Descriptive --------------------------
   source_krfs1("02_Descriptive", "02_00-Descriptive_Setup.R")
