@@ -150,7 +150,7 @@ config <- list(
     # Fuer Wohnort zum Diagnosezeitpunkt kann gkz_var auf "gkz_diagnose" gesetzt werden.
     analysis_region = list(
       enabled = TRUE,
-      gkz_var = "gkz_current",
+      gkz_var = "gkz_diagnose",
       gkz_prefix = "0811",
       label = "Metropolregion Stuttgart"
     ),
@@ -164,7 +164,7 @@ config <- list(
     ),
 
     # Entitaeten mit separaten Auswertungsordnern.
-    focus_icd10_3 = c("C50", "C61", "C18", "C20", "C83"),
+    focus_icd10_3 = c("C50", "C61", "C18"),
 
     # Entitaeten fuer die kompakte Ergebnis-Uebersicht.
     result_overview_icd10_3 = c("C50", "C61", "C18", "C20", "C83"),
@@ -185,7 +185,7 @@ config <- list(
     active_icd10_3 = character(0),
 
     # Default fuer Entitaeten ohne eigenen Grenzwert.
-    near_care_default_km = 25,
+    near_care_default_km = 9,
 
     # Entitaetsspezifische Grenzwerte fuer die drei Poster-Fokusentitaeten.
     # C20, C83 und alle weiteren Entitaeten nutzen den Default.
