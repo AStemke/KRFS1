@@ -27,34 +27,58 @@ load_ads <- function(current_wd = config$paths$current_wd, productive = config$d
   ads_dir <- file.path(current_wd, "data", data_kind, "ads")
   dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
   dir.create(ads_dir, recursive = TRUE, showWarnings = FALSE)
-  
+
+  # Produktiv-ADS bei jedem Lauf frisch erzeugen -----------------------------
+  ## Vorhandenen abgeleiteten Cache entfernen --------------------------
   ads_files <- list.files(ads_dir, pattern = "\\.rds$", full.names = TRUE)
+
+  if (
+    isTRUE(productive) &&
+      isTRUE(config$data$rebuild_productive_ads) &&
+      length(ads_files) > 0L
+  ) {
+    removed <- file.remove(ads_files)
+
+    if (any(!removed)) {
+      stop(
+        "Produktiver ADS-Cache konnte nicht vollstaendig geloescht werden: ",
+        paste(basename(ads_files[!removed]), collapse = ", "),
+        call. = FALSE
+      )
+    }
+
+    message(
+      "Produktiver ADS-Cache geloescht; Datensatz wird aus raw neu aufgebaut."
+    )
+    ads_files <- character(0)
+  }
+
   if (isTRUE(config$data$prefer_existing_ads) && length(ads_files) > 0) {
     ads_file <- ads_files[order(file.info(ads_files)$mtime, decreasing = TRUE)][[1]]
     ads <- readRDS(ads_file)
     return(list(data = ads$data, legend = ads$legend, meta = ads$meta))
   }
-  
+
   data_pattern <- if (isTRUE(productive)) config$data$productive_data_regex else config$data$dummy_data_regex
   legend_pattern <- if (isTRUE(productive)) config$data$productive_legend_regex else config$data$dummy_legend_regex
-  
+
   data_file <- .find_single_file(raw_dir, data_pattern, paste0(data_kind, " Datensatz"))
   legend_file <- .find_single_file(raw_dir, legend_pattern, paste0(data_kind, " Legende"))
   file_date <- .extract_date_from_filename(data_file)
-  
-  #Productive ist bereites RDS, für Dummy oder Test
-  if(config$data$productive == FALSE){
+
+  # Productive ist bereits RDS, Dummy/Test wird aus Excel eingelesen.
+  if (!isTRUE(productive)) {
     dat <- readxl::read_excel(data_file, sheet = config$data$sheet_data, .name_repair = "minimal")
-  } else{
-    dat <-read_rds(data_file)
+  } else {
+    dat <- readr::read_rds(data_file)
   }
-  
+
   legend <- readxl::read_excel(legend_file, sheet = config$data$sheet_legend, .name_repair = "minimal")
   dat <- as.data.frame(dat)
   legend <- as.data.frame(legend)
   names(dat) <- trimws(names(dat))
   names(legend) <- trimws(names(legend))
-  
+
   meta <- list(
     data_kind = data_kind,
     source_data_file = data_file,
@@ -62,7 +86,7 @@ load_ads <- function(current_wd = config$paths$current_wd, productive = config$d
     source_date = file_date,
     created_at = Sys.time()
   )
-  
+
   ads <- list(data = dat, legend = legend, meta = meta)
   saveRDS(ads, file = file.path(ads_dir, paste0("ads_", file_date, ".rds")))
   ads
