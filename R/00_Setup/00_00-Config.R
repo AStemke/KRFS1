@@ -32,12 +32,18 @@ config <- list(
     dummy_legend_regex = "^Dummy_Datensatz_[0-9]{8}_Legende\\.xlsx$",
     productive_data_regex = "^Productive_Datensatz_[0-9]{8}\\.rds$",
     productive_legend_regex = "^Productive_Datensatz_[0-9]{8}_Legende\\.xlsx$",
-    prefer_existing_ads = TRUE
+    prefer_existing_ads = TRUE,
+    # TRUE loescht bei Produktivlaeufen den abgeleiteten ADS-Cache und baut ihn
+    # aus den Rohdaten neu auf. Der Productive_Datensatz im raw-Ordner bleibt erhalten.
+    rebuild_productive_ads = TRUE
   ),
 
   # Datenschutz-Thresholds -----------------------------
   ## Zellunterdrueckung --------------------------
   thresholds = list(
+    # Globaler Schalter. FALSE setzt die Threshold-Pruefung fuer alle
+    # Output-Kategorien aus. n_min selbst bleibt dabei unveraendert.
+    enabled = TRUE,
     # Regel: 0 darf ausgegeben werden; Fallzahlen von 1 bis 3 werden maskiert.
     # Erst Zellen mit mindestens 4 Faellen werden unveraendert ausgegeben.
     n_min = 4,
@@ -240,6 +246,20 @@ config <- list(
     )
   )
 )
+
+# Datenschutz-Thresholds -----------------------------
+## Globalen Schalter auf Output-Kategorien anwenden --------------------------
+# n_min = 0 ist absichtlich nicht erforderlich. Fuer Test- oder interne Laeufe
+# kann die gesamte Threshold-Logik ueber config$thresholds$enabled deaktiviert werden.
+if (!isTRUE(config$thresholds$enabled)) {
+  config$output_categories <- lapply(
+    config$output_categories,
+    function(policy) {
+      policy$threshold <- FALSE
+      policy
+    }
+  )
+}
 
 # Aktives Altersklassenschema -----------------------------
 ## Rueckwaertskompatible age_breaks und age_labels setzen --------------------------
