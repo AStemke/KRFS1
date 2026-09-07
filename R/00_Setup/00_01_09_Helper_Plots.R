@@ -129,6 +129,7 @@ tc_apply_figure_palette <- function(plot, fig_id, filename) {
 tc_apply_figure_style <- function(plot, fig_id, filename) {
   text_config <- config$figures$text
   margins <- text_config$plot_margin_mm
+  figure_key <- paste(fig_id, filename, sep = "_")
 
   plot <- plot +
     ggplot2::labs(
@@ -183,6 +184,23 @@ tc_apply_figure_style <- function(plot, fig_id, filename) {
         unit = "mm"
       )
     )
+
+  # Karten-Heatmaps sollen keine von ggplot2 automatisch erzeugten
+  # x-/y-Achsentitel oder Koordinatenachsen anzeigen. Dieser Schritt steht
+  # bewusst nach dem allgemeinen Theme, damit axis.title nicht erneut gesetzt wird.
+  if (grepl("near_care_heatmap", figure_key, ignore.case = TRUE)) {
+    plot <- plot +
+      ggplot2::labs(
+        x = NULL,
+        y = NULL
+      ) +
+      ggplot2::theme(
+        axis.title = ggplot2::element_blank(),
+        axis.text = ggplot2::element_blank(),
+        axis.ticks = ggplot2::element_blank(),
+        panel.grid = ggplot2::element_blank()
+      )
+  }
 
   tc_apply_figure_palette(
     plot = plot,
