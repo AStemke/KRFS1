@@ -1,6 +1,8 @@
 # 00_00-Config.R -----------------------------
 ## Zweck --------------------------
-# Zentrale Einstellungen fuer Pfade, Daten, Datenschutz, Geodaten und Grafiken.
+# Zentrale Einstellungen fuer Pfade, Daten, Datenschutz, Geodaten und Analysen.
+# Die Darstellungsparameter fuer Grafiken werden separat in
+# 00_00_01-Config_Figures.R gepflegt und unten in config$figures geladen.
 # Fuer Dummy-Daten: config$data$productive <- FALSE
 # Fuer Produktivdaten: config$data$productive <- TRUE
 
@@ -152,13 +154,13 @@ config <- list(
     # Standard ist der aktuelle Wohnort, passend zur Distanzvariable, die laut
     # Datenlegende vom aktuellen Wohnort zum Krankenhaus berechnet wird.
     # Der Krankenhausstandort selbst wird NICHT regional gefiltert und darf
-    # deshalb ausserhalb der Metropolregion Stuttgart liegen.
+    # deshalb ausserhalb des Stadtkreises Stuttgart und der Umgebung liegen.
     # Fuer Wohnort zum Diagnosezeitpunkt kann gkz_var auf "gkz_diagnose" gesetzt werden.
     analysis_region = list(
       enabled = TRUE,
       gkz_var = "gkz_diagnose",
       gkz_prefix = "0811",
-      label = "Metropolregion Stuttgart"
+      label = "Stadtkreis Stuttgart und Umgebung"
     ),
 
     # Selektive Gesamtpopulation gemaess Projektbeschreibung.
@@ -180,8 +182,8 @@ config <- list(
     result_overview_region = list(
       stuttgart_gkz_prefix = "0811",
       bw_gkz_prefix = "08",
-      label_stuttgart = "Metropolregion Stuttgart",
-      label_bw_other = "Baden-Wuerttemberg ohne Metropolregion Stuttgart",
+      label_stuttgart = "Stadtkreis Stuttgart und Umgebung",
+      label_bw_other = "Baden-Wuerttemberg ohne Stadtkreis Stuttgart und Umgebung",
       label_outside_bw = "Ausserhalb Baden-Wuerttembergs",
       label_missing = "GKZ fehlend"
     ),
@@ -206,14 +208,6 @@ config <- list(
 
     distance_breaks_km = c(-Inf, 10, 25, 50, 100, Inf),
     distance_labels = c("<10 km", "10-<25 km", "25-<50 km", "50-<100 km", ">=100 km")
-  ),
-
-  # Figure Settings -----------------------------
-  ## Groesse und Aufloesung --------------------------
-  figures = list(
-    width = 10,
-    height = 6,
-    dpi = 300
   ),
 
   # Explore / Altersgruppen -----------------------------
@@ -246,6 +240,26 @@ config <- list(
     )
   )
 )
+
+# Grafik-Konfiguration -----------------------------
+## Unterkonfiguration laden --------------------------
+figure_config_path <- file.path(
+  "R",
+  "00_Setup",
+  "00_00_01-Config_Figures.R"
+)
+
+if (!file.exists(figure_config_path)) {
+  stop(
+    "Grafik-Konfiguration nicht gefunden: ",
+    figure_config_path,
+    call. = FALSE
+  )
+}
+
+source(figure_config_path)
+config$figures <- krfs1_figure_config
+rm(krfs1_figure_config, figure_config_path)
 
 # Datenschutz-Thresholds -----------------------------
 ## Globalen Schalter auf Output-Kategorien anwenden --------------------------
