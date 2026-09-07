@@ -272,7 +272,7 @@ if (
       guide = "none"
     ) +
     ggplot2::labs(
-      title = "Anteil wohnortnaher Versorgung",
+      title = "Anteil wohnortnaher Erstdiagnosen",
       subtitle = paste0(
         "Baden-Wuerttemberg und ausserhalb | ",
         "Wohnortnah bis ",
@@ -643,7 +643,7 @@ if (
       ) +
       ggplot2::labs(
         title = paste0(
-          "Anteil wohnortnaher Versorgung nach ",
+          "Anteil wohnortnaher Erstdiagnosen nach ",
           map_level_label
         ),
         subtitle = paste0(
