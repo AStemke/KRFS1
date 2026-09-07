@@ -1,4 +1,4 @@
-# Metropolregion-Stuttgart-Heatmap -----------------------------
+# Regionale Heatmap -----------------------------
 ## Zweck --------------------------
 # Stellt den Anteil wohnortnah behandelter Tumoren fuer Personen mit Wohnort
 # innerhalb des konfigurierten GKZ-Prefix dar. Der Krankenhausstandort darf
@@ -219,7 +219,7 @@ if (
     ) +
     ggplot2::labs(
       title = paste0(
-        "Anteil wohnortnaher Versorgung nach ",
+        "Anteil wohnortnaher Erstdiagnosen nach ",
         map_level_label,
         " | ",
         kr_analysis_region_label()
