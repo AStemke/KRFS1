@@ -49,6 +49,7 @@ krfs1_figure_config <- list(
       "#56B4E9", "#D55E00", "#F0E442", "#000000"
     ),
     heatmap = list(
+      # Viridis-Familie; option = "C" behaelt die bisherige Farbskala bei.
       option = "C",
       begin = 0.05,
       end = 0.95,
@@ -76,8 +77,15 @@ krfs1_figure_config <- list(
     city_point_size = 2.4,
     city_point_stroke = 0.6,
     city_label_size = 2.8,
-    city_label_nudge_y = 5500,
-    city_label_nudge_y_stuttgart = 900
+    # Staedtenamen etwas oberhalb der Punkte platzieren.
+    city_label_nudge_y = 7500,
+    city_label_nudge_y_stuttgart = 1400,
+    # Heller Label-Hintergrund sorgt auch auf dunkler Heatmap fuer Lesbarkeit.
+    city_label_color = "black",
+    city_label_fill = "white",
+    city_label_linewidth = 0.15,
+    city_label_padding_lines = 0.12,
+    city_label_radius_lines = 0.08
   )
 )
 
