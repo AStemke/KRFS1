@@ -125,6 +125,73 @@ tc_apply_figure_palette <- function(plot, fig_id, filename) {
 }
 
 # Darstellung -----------------------------
+## Stadtbeschriftungen auf Heatmaps --------------------------
+# Die bestehenden geom_sf_text-Layer der Stadtmarker werden unmittelbar vor
+# dem Export durch helle Labels ersetzt. Dadurch bleiben die Namen auch auf
+# dunklen Bereichen der Viridis-Skala lesbar, ohne die Fachskripte mit
+# Darstellungsparametern zu belasten.
+tc_apply_heatmap_city_labels <- function(plot, fig_id, filename) {
+  figure_key <- paste(fig_id, filename, sep = "_")
+
+  if (!grepl("near_care_heatmap", figure_key, ignore.case = TRUE)) {
+    return(plot)
+  }
+
+  label_layers <- vapply(
+    plot$layers,
+    function(layer) {
+      layer_data <- layer$data
+      has_city_data <-
+        is.data.frame(layer_data) &&
+        "city_label" %in% names(layer_data)
+      has_label_mapping <- !is.null(layer$mapping$label)
+      has_city_data && has_label_mapping
+    },
+    logical(1)
+  )
+
+  if (!any(label_layers)) {
+    return(plot)
+  }
+
+  city_label_data <- plot$layers[[which(label_layers)[1L]]]$data
+  plot$layers <- plot$layers[!label_layers]
+
+  map_config <- config$figures$maps
+  is_stuttgart <- grepl(
+    "stuttgart|04_04",
+    figure_key,
+    ignore.case = TRUE
+  )
+  label_nudge_y <- if (is_stuttgart) {
+    map_config$city_label_nudge_y_stuttgart
+  } else {
+    map_config$city_label_nudge_y
+  }
+
+  plot +
+    ggplot2::geom_sf_label(
+      data = city_label_data,
+      ggplot2::aes(label = city_label),
+      nudge_y = label_nudge_y,
+      size = map_config$city_label_size,
+      fontface = "bold",
+      color = map_config$city_label_color,
+      fill = map_config$city_label_fill,
+      linewidth = map_config$city_label_linewidth,
+      label.padding = grid::unit(
+        map_config$city_label_padding_lines,
+        "lines"
+      ),
+      label.r = grid::unit(
+        map_config$city_label_radius_lines,
+        "lines"
+      ),
+      show.legend = FALSE,
+      inherit.aes = FALSE
+    )
+}
+
 ## Einheitliche Texte und Raender --------------------------
 tc_apply_figure_style <- function(plot, fig_id, filename) {
   text_config <- config$figures$text
@@ -200,6 +267,12 @@ tc_apply_figure_style <- function(plot, fig_id, filename) {
         axis.ticks = ggplot2::element_blank(),
         panel.grid = ggplot2::element_blank()
       )
+
+    plot <- tc_apply_heatmap_city_labels(
+      plot = plot,
+      fig_id = fig_id,
+      filename = filename
+    )
   }
 
   tc_apply_figure_palette(
