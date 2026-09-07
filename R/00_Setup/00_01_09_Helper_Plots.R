@@ -224,3 +224,154 @@ tc_figure_export_settings <- function(fig_id, filename) {
     background = export_config$background
   )
 }
+
+# Grafikexport -----------------------------
+## PNG und PDF mit identischer Darstellungslogik --------------------------
+# Diese Definitionen werden nach 00_01_03_Helper_Write.R geladen und ersetzen
+# gezielt nur die beiden Grafikfunktionen. Tabellen- und Threshold-Logik bleiben
+# unveraendert in ihrem bisherigen Helper.
+tc_save_figure <- function(
+    plot,
+    fig_id,
+    filename,
+    paths,
+    log_file,
+    width = NULL,
+    height = NULL,
+    dpi = NULL
+) {
+  export_settings <- tc_figure_export_settings(
+    fig_id = fig_id,
+    filename = filename
+  )
+
+  width <- if (is.null(width)) export_settings$width else width
+  height <- if (is.null(height)) export_settings$height else height
+  dpi <- if (is.null(dpi)) export_settings$dpi else dpi
+
+  stem <- paste0(fig_id, "_", filename)
+  png_path <- file.path(paths$figures, paste0(stem, ".png"))
+  pdf_path <- file.path(paths$figures, paste0(stem, ".pdf"))
+
+  png_device <- if (
+    isTRUE(config$figures$export$use_ragg_if_available) &&
+      requireNamespace("ragg", quietly = TRUE)
+  ) {
+    ragg::agg_png
+  } else {
+    "png"
+  }
+
+  ggplot2::ggsave(
+    filename = png_path,
+    plot = plot,
+    device = png_device,
+    width = width,
+    height = height,
+    units = "in",
+    dpi = dpi,
+    bg = export_settings$background,
+    limitsize = FALSE
+  )
+
+  if (
+    isTRUE(config$figures$export$use_cairo_pdf_if_available) &&
+      isTRUE(capabilities("cairo"))
+  ) {
+    ggplot2::ggsave(
+      filename = pdf_path,
+      plot = plot,
+      device = grDevices::cairo_pdf,
+      width = width,
+      height = height,
+      units = "in",
+      bg = export_settings$background,
+      limitsize = FALSE
+    )
+  } else {
+    ggplot2::ggsave(
+      filename = pdf_path,
+      plot = plot,
+      width = width,
+      height = height,
+      units = "in",
+      bg = export_settings$background,
+      limitsize = FALSE
+    )
+  }
+
+  log_write(
+    log_file,
+    "INFO",
+    "Figure written: ",
+    stem,
+    " | preset=",
+    export_settings$preset,
+    " | ",
+    width,
+    "x",
+    height,
+    " in"
+  )
+
+  invisible(list(png = png_path, pdf = pdf_path))
+}
+
+## Grafik mit Threshold schreiben --------------------------
+tc_write_figure <- function(
+    plot,
+    fig_id,
+    filename,
+    ctx,
+    threshold_tab,
+    output_category = "aggregate_figure",
+    threshold = TRUE,
+    threshold_n_col = NULL,
+    threshold_label_cols = NULL,
+    threshold_object_name = paste0(fig_id, "_", filename)
+) {
+  stopifnot(is.data.frame(threshold_tab))
+  ok <- TRUE
+
+  if (isTRUE(threshold)) {
+    ok <- passes_threshold_category(
+      tab = threshold_tab,
+      output_category = output_category,
+      n_col = threshold_n_col,
+      label_cols = threshold_label_cols,
+      object_name = threshold_object_name
+    )
+  }
+
+  if (isTRUE(ok)) {
+    plot <- tc_add_analysis_label_to_plot(
+      plot,
+      ctx$analysis_label
+    )
+    plot <- tc_apply_figure_style(
+      plot = plot,
+      fig_id = fig_id,
+      filename = filename
+    )
+
+    tc_save_figure(
+      plot = plot,
+      fig_id = fig_id,
+      filename = filename,
+      paths = ctx$paths,
+      log_file = ctx$log_file
+    )
+  } else {
+    ctx <- tc_add_suppressed(
+      ctx = ctx,
+      object_id = paste0(fig_id, "_", filename),
+      output_category = output_category,
+      reason = paste0(
+        "Datenschutz-Threshold verletzt: 0 < n < ",
+        config$thresholds$n_min
+      )
+    )
+  }
+
+  ctx
+}
