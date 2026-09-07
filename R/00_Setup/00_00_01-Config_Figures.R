@@ -63,6 +63,21 @@ krfs1_figure_config <- list(
       direction = 1,
       na_value = "grey90"
     )
+  ),
+
+  # Karten -----------------------------
+  ## Linien, Punkte und Beschriftungen --------------------------
+  maps = list(
+    boundary_color = "grey70",
+    line_width_by_digits = c(
+      "5" = 0.15,
+      "8" = 0.025
+    ),
+    city_point_size = 2.4,
+    city_point_stroke = 0.6,
+    city_label_size = 2.8,
+    city_label_nudge_y = 5500,
+    city_label_nudge_y_stuttgart = 900
   )
 )
 
