@@ -1,8 +1,8 @@
 # Geodaten-Konfiguration -----------------------------
 ## Zweck --------------------------
 # Zentrale Einstellungen fuer alle Geodatenauswertungen. Allgemeine
-# Geodatenpfade und CRS-Angaben bleiben in 00_00-Config.R; Einstellungen,
-# die nur die Karten des Analysemoduls betreffen, werden hier gebuendelt.
+# Geodatenpfade und CRS-Angaben bleiben in 00_00-Config.R; fachliche
+# Kartenparameter liegen hier, visuelle Einstellungen in config$figures$maps.
 
 # Krebszentrumsstaedte -----------------------------
 ## Referenz --------------------------
@@ -60,6 +60,7 @@ center_cities_active <- center_cities_all |>
 ## Aktive Wohnregion --------------------------
 analysis_region <- config$analysis$analysis_region
 analysis_region_enabled <- !is.null(analysis_region) && isTRUE(analysis_region$enabled)
+figure_map_config <- config$figures$maps
 
 ## Kartenvarianten --------------------------
 config$geodata$heatmap <- list(
@@ -84,25 +85,22 @@ config$geodata$heatmap <- list(
   stuttgart = list(
     gkz_prefix = if (analysis_region_enabled) analysis_region$gkz_prefix else "0811",
     gkz_digits = 8L,
-    label = if (analysis_region_enabled) analysis_region$label else "Metropolregion Stuttgart"
+    label = if (analysis_region_enabled) analysis_region$label else "Stadtkreis Stuttgart und Umgebung"
   ),
 
   # Rueckwaertskompatible Parameter fuer die bestehende BW-Heatmap.
   gkz_digits = 5L,
   allowed_gkz_digits = c(5L, 8L),
   simplify_tolerance_m = 200,
-  boundary_color = "grey70",
-  line_width_by_digits = c(
-    "5" = 0.15,
-    "8" = 0.025
-  ),
 
-  # Einheitliche Darstellung der Krebszentrumsstaedte.
-  city_point_size = 2.4,
-  city_point_stroke = 0.6,
-  city_label_size = 2.8,
-  city_label_nudge_y = 5500,
-  city_label_nudge_y_stuttgart = 900,
+  # Visuelle Kartenparameter kommen aus der zentralen Grafik-Konfiguration.
+  boundary_color = figure_map_config$boundary_color,
+  line_width_by_digits = figure_map_config$line_width_by_digits,
+  city_point_size = figure_map_config$city_point_size,
+  city_point_stroke = figure_map_config$city_point_stroke,
+  city_label_size = figure_map_config$city_label_size,
+  city_label_nudge_y = figure_map_config$city_label_nudge_y,
+  city_label_nudge_y_stuttgart = figure_map_config$city_label_nudge_y_stuttgart,
 
   # Alle dokumentierten Zentren sowie die fuer die aktive Entitaet relevanten
   # Stadtmarker. Dadurch zeigt jede Fokuskarte nur passende Zentren; die
