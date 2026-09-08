@@ -125,6 +125,65 @@ tc_apply_figure_palette <- function(plot, fig_id, filename) {
 }
 
 # Darstellung -----------------------------
+## Polygonkanten auf Heatmaps --------------------------
+# Bei Rasterexporten koennen an gemeinsam gerenderten Polygonkanten helle
+# Haarlinien entstehen. Deshalb wird der Fuell-Layer ohne Rand gezeichnet und
+# die Gebietsgrenze als separater Layer daruebergelegt. Der PDF-Export bleibt
+# optisch identisch, waehrend PNG/JPEG robuster gerendert werden.
+tc_apply_heatmap_polygon_rendering <- function(plot, fig_id, filename) {
+  figure_key <- paste(fig_id, filename, sep = "_")
+
+  if (!grepl("near_care_heatmap", figure_key, ignore.case = TRUE)) {
+    return(plot)
+  }
+
+  fill_layers <- vapply(
+    plot$layers,
+    function(layer) !is.null(layer$mapping$fill),
+    logical(1)
+  )
+
+  if (!any(fill_layers) || !inherits(plot$data, "sf")) {
+    return(plot)
+  }
+
+  fill_index <- which(fill_layers)[1L]
+
+  # Fuellung ohne Polygonrand rendern.
+  plot$layers[[fill_index]]$aes_params$colour <- NA
+  plot$layers[[fill_index]]$aes_params$linewidth <- 0
+
+  map_config <- config$figures$maps
+  is_eight_digit <- grepl(
+    "stuttgart|04_04|gemeinde|gkz8",
+    figure_key,
+    ignore.case = TRUE
+  )
+  boundary_digits <- if (is_eight_digit) "8" else "5"
+  boundary_linewidth <- unname(
+    map_config$line_width_by_digits[boundary_digits]
+  )
+
+  boundary_layer <- ggplot2::geom_sf(
+    data = plot$data,
+    fill = NA,
+    color = map_config$boundary_color,
+    linewidth = boundary_linewidth,
+    show.legend = FALSE,
+    inherit.aes = FALSE
+  )
+
+  # Grenze direkt nach dem Fuell-Layer einfuegen, damit Stadtmarker und
+  # Beschriftungen weiterhin oberhalb der Gebietsgrenzen liegen.
+  plot$layers <- append(
+    plot$layers,
+    list(boundary_layer),
+    after = fill_index
+  )
+
+  plot
+}
+
 ## Stadtbeschriftungen auf Heatmaps --------------------------
 # Die bestehenden geom_sf_text-Layer der Stadtmarker werden unmittelbar vor
 # dem Export durch helle Labels ersetzt. Dadurch bleiben die Namen auch auf
@@ -268,6 +327,12 @@ tc_apply_figure_style <- function(plot, fig_id, filename) {
         panel.grid = ggplot2::element_blank()
       )
 
+    plot <- tc_apply_heatmap_polygon_rendering(
+      plot = plot,
+      fig_id = fig_id,
+      filename = filename
+    )
+
     plot <- tc_apply_heatmap_city_labels(
       plot = plot,
       fig_id = fig_id,
@@ -317,7 +382,7 @@ tc_figure_export_settings <- function(fig_id, filename) {
 }
 
 # Grafikexport -----------------------------
-## PNG und PDF mit identischer Darstellungslogik --------------------------
+## PNG, PDF und optional JPEG mit identischer Darstellungslogik --------------------------
 # Diese Definitionen werden nach 00_01_03_Helper_Write.R geladen und ersetzen
 # gezielt nur die beiden Grafikfunktionen. Tabellen- und Threshold-Logik bleiben
 # unveraendert in ihrem bisherigen Helper.
@@ -341,6 +406,7 @@ tc_save_figure <- function(
   dpi <- if (is.null(dpi)) export_settings$dpi else dpi
 
   stem <- paste0(fig_id, "_", filename)
+  figure_key <- stem
   png_path <- file.path(paths$figures, paste0(stem, ".png"))
   pdf_path <- file.path(paths$figures, paste0(stem, ".pdf"))
 
@@ -391,6 +457,53 @@ tc_save_figure <- function(
     )
   }
 
+  jpeg_patterns <- config$figures$export$jpeg_patterns
+  write_jpeg <-
+    isTRUE(config$figures$export$write_jpeg) &&
+    (
+      length(jpeg_patterns) == 0L ||
+        any(
+          vapply(
+            jpeg_patterns,
+            function(pattern) {
+              grepl(pattern, figure_key, ignore.case = TRUE)
+            },
+            logical(1)
+          )
+        )
+    )
+
+  jpeg_path <- NULL
+
+  if (isTRUE(write_jpeg)) {
+    jpeg_path <- file.path(
+      paths$figures,
+      paste0(stem, ".jpg")
+    )
+
+    jpeg_device <- if (
+      isTRUE(config$figures$export$use_ragg_if_available) &&
+        requireNamespace("ragg", quietly = TRUE)
+    ) {
+      ragg::agg_jpeg
+    } else {
+      "jpeg"
+    }
+
+    ggplot2::ggsave(
+      filename = jpeg_path,
+      plot = plot,
+      device = jpeg_device,
+      width = width,
+      height = height,
+      units = "in",
+      dpi = dpi,
+      bg = export_settings$background,
+      quality = config$figures$export$jpeg_quality,
+      limitsize = FALSE
+    )
+  }
+
   log_write(
     log_file,
     "INFO",
@@ -402,10 +515,18 @@ tc_save_figure <- function(
     width,
     "x",
     height,
-    " in"
+    " in | dpi=",
+    dpi,
+    if (isTRUE(write_jpeg)) " | jpeg=on" else ""
   )
 
-  invisible(list(png = png_path, pdf = pdf_path))
+  invisible(
+    list(
+      png = png_path,
+      pdf = pdf_path,
+      jpeg = jpeg_path
+    )
+  )
 }
 
 ## Grafik mit Threshold schreiben --------------------------
