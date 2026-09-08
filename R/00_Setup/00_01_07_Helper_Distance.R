@@ -1,10 +1,59 @@
 # Distanzgrenzen -----------------------------
+## Distanzmodus fuer aktive Analysegruppe --------------------------
+kr_near_care_mode <- function(
+    output_group = config$analysis$active_output_group
+) {
+  # Der Selektiv-Gesamt-Modus betrifft ausschliesslich die kombinierte
+  # Projektkohorte. Einzel-ICD-Auswertungen verwenden immer spezifische
+  # Grenzwerte, sofern sie konfiguriert sind, und sonst den Default.
+  if (!identical(output_group, "Selektiv_Gesamt")) {
+    return("specific_or_default")
+  }
+
+  mode <- as.character(
+    config$analysis$near_care_selective_mode
+  )[1L]
+  allowed_modes <- c(
+    "specific_or_default",
+    "default_only"
+  )
+
+  if (
+    is.na(mode) ||
+      !mode %in% allowed_modes
+  ) {
+    stop(
+      paste0(
+        "Unbekannter config$analysis$near_care_selective_mode: ",
+        mode,
+        ". Erlaubt sind: ",
+        paste(allowed_modes, collapse = ", "),
+        "."
+      ),
+      call. = FALSE
+    )
+  }
+
+  mode
+}
+
 ## Entitaetsspezifischen Grenzwert bestimmen --------------------------
-kr_near_care_limit_km <- function(icd10_3) {
+kr_near_care_limit_km <- function(
+    icd10_3,
+    output_group = config$analysis$active_output_group
+) {
   default_km <- as.numeric(config$analysis$near_care_default_km)
   limits <- config$analysis$near_care_km_by_icd
+  mode <- kr_near_care_mode(output_group)
 
   out <- rep(default_km, length(icd10_3))
+
+  # Fuer Selektiv_Gesamt kann explizit festgelegt werden, dass fuer alle
+  # Entitaeten nur der Default gilt. Einzel-ICD-Gruppen landen nie in diesem
+  # Zweig, weil kr_near_care_mode() dort specific_or_default liefert.
+  if (identical(mode, "default_only")) {
+    return(out)
+  }
 
   if (length(limits) == 0L) {
     return(out)
