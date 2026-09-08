@@ -8,10 +8,14 @@ krfs1_figure_config <- list(
   # Export -----------------------------
   ## Groessen und Dateiausgabe --------------------------
   export = list(
-    dpi = 300,
+    dpi = 450,
     background = "white",
     use_ragg_if_available = TRUE,
     use_cairo_pdf_if_available = TRUE,
+    # JPEG wird zunaechst nur fuer Heatmaps als Vergleichsformat ausgegeben.
+    write_jpeg = TRUE,
+    jpeg_quality = 95,
+    jpeg_patterns = c("heatmap"),
     presets = list(
       default = list(width = 11, height = 6.5),
       wide = list(width = 12, height = 6.5),
@@ -33,9 +37,10 @@ krfs1_figure_config <- list(
     axis_title_size = 10.5,
     legend_title_size = 10.5,
     legend_text_size = 9.5,
-    title_wrap = 58L,
-    subtitle_wrap = 78L,
-    caption_wrap = 92L,
+    # Etwas breitere Zeilen vermeiden unguenstige fruehe Umbrueche.
+    title_wrap = 66L,
+    subtitle_wrap = 88L,
+    caption_wrap = 100L,
     lineheight = 1.08,
     plot_margin_mm = c(top = 10, right = 12, bottom = 10, left = 12)
   ),
