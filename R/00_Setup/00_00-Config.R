@@ -45,6 +45,7 @@ config <- list(
   thresholds = list(
     # Globaler Schalter. FALSE setzt die Threshold-Pruefung fuer alle
     # Output-Kategorien aus. n_min selbst bleibt dabei unveraendert.
+    #TODO: Fuer vollstaendige Heatmap Grafik aus FALSE setzen, ggf. Stats in Main auskommentieren
     enabled = TRUE,
     # Regel: 0 darf ausgegeben werden; Fallzahlen von 1 bis 3 werden maskiert.
     # Erst Zellen mit mindestens 4 Faellen werden unveraendert ausgegeben.
@@ -192,8 +193,11 @@ config <- list(
     active_output_group = "Gesamt",
     active_icd10_3 = character(0),
 
+    #TODO: Distanzen anpassen
     # Default fuer Entitaeten ohne eigenen Grenzwert.
     near_care_default_km = 9,
+    # Rueckwaertskompatibler Alias fuer Skripte, die nur einen Wert anzeigen.
+    near_care_km = 9,
 
     # Entitaetsspezifische Grenzwerte fuer die drei Poster-Fokusentitaeten.
     # C20, C83 und alle weiteren Entitaeten nutzen den Default.
@@ -209,10 +213,9 @@ config <- list(
     # der selektiven Gesamtgruppe ausschliesslich near_care_default_km.
     # Einzel-ICD-Auswertungen nutzen unabhaengig davon immer spezifische
     # Grenzwerte, sofern sie in near_care_km_by_icd hinterlegt sind.
-    near_care_selective_mode = "specific_or_default",
+    near_care_selective_mode = "default_only",
 
-    # Rueckwaertskompatibler Alias fuer Skripte, die nur einen Wert anzeigen.
-    near_care_km = 9,
+
 
     distance_breaks_km = c(-Inf, 10, 25, 50, 100, Inf),
     distance_labels = c("<10 km", "10-<25 km", "25-<50 km", "50-<100 km", ">=100 km")
