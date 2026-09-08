@@ -127,9 +127,9 @@ tc_apply_figure_palette <- function(plot, fig_id, filename) {
 # Darstellung -----------------------------
 ## Polygonkanten auf Heatmaps --------------------------
 # Bei Rasterexporten koennen an gemeinsam gerenderten Polygonkanten helle
-# Haarlinien entstehen. Deshalb wird der Fuell-Layer ohne Rand gezeichnet und
-# die Gebietsgrenze als separater Layer daruebergelegt. Der PDF-Export bleibt
-# optisch identisch, waehrend PNG/JPEG robuster gerendert werden.
+# Haarlinien entstehen. Der Fuell-Layer wird deshalb ohne Rand gezeichnet und
+# eine separate Gebietsgrenze ueber den normalen ggplot-Additionsmechanismus
+# hinzugefuegt. Das vermeidet inkompatible direkte Eingriffe in Layer-Objekte.
 tc_apply_heatmap_polygon_rendering <- function(plot, fig_id, filename) {
   figure_key <- paste(fig_id, filename, sep = "_")
 
@@ -149,9 +149,9 @@ tc_apply_heatmap_polygon_rendering <- function(plot, fig_id, filename) {
 
   fill_index <- which(fill_layers)[1L]
 
-  # Fuellung ohne Polygonrand rendern.
+  # Fuellung ohne Polygonrand rendern. Die Randbreite muss nicht veraendert
+  # werden, sobald die Linienfarbe auf NA gesetzt ist.
   plot$layers[[fill_index]]$aes_params$colour <- NA
-  plot$layers[[fill_index]]$aes_params$linewidth <- 0
 
   map_config <- config$figures$maps
   is_eight_digit <- grepl(
@@ -160,26 +160,33 @@ tc_apply_heatmap_polygon_rendering <- function(plot, fig_id, filename) {
     ignore.case = TRUE
   )
   boundary_digits <- if (is_eight_digit) "8" else "5"
-  boundary_linewidth <- unname(
+  boundary_size <- unname(
     map_config$line_width_by_digits[boundary_digits]
   )
 
-  boundary_layer <- ggplot2::geom_sf(
-    data = plot$data,
-    fill = NA,
-    color = map_config$boundary_color,
-    linewidth = boundary_linewidth,
-    show.legend = FALSE,
-    inherit.aes = FALSE
-  )
+  # `size` bleibt auch mit aelteren ggplot2-Versionen kompatibel. Der Layer
+  # wird zuerst regulaer mit `+` registriert und erst danach in der Reihenfolge
+  # direkt hinter den Fuell-Layer verschoben.
+  plot <- plot +
+    ggplot2::geom_sf(
+      data = plot$data,
+      fill = NA,
+      color = map_config$boundary_color,
+      size = boundary_size,
+      show.legend = FALSE,
+      inherit.aes = FALSE
+    )
 
-  # Grenze direkt nach dem Fuell-Layer einfuegen, damit Stadtmarker und
-  # Beschriftungen weiterhin oberhalb der Gebietsgrenzen liegen.
-  plot$layers <- append(
-    plot$layers,
-    list(boundary_layer),
-    after = fill_index
-  )
+  boundary_index <- length(plot$layers)
+
+  if (boundary_index > fill_index + 1L) {
+    layer_order <- c(
+      seq_len(fill_index),
+      boundary_index,
+      seq.int(fill_index + 1L, boundary_index - 1L)
+    )
+    plot$layers <- plot$layers[layer_order]
+  }
 
   plot
 }
