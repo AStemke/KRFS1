@@ -91,7 +91,9 @@ config$geodata$heatmap <- list(
   # Rueckwaertskompatible Parameter fuer die bestehende BW-Heatmap.
   gkz_digits = 5L,
   allowed_gkz_digits = c(5L, 8L),
-  simplify_tolerance_m = 200,
+  # Geringere Vereinfachung erhaelt gemeinsame Gemeindegrenzen genauer und
+  # reduziert sichtbare Rasterartefakte zwischen benachbarten Polygonen.
+  simplify_tolerance_m = 50,
 
   # Visuelle Kartenparameter kommen aus der zentralen Grafik-Konfiguration.
   boundary_color = figure_map_config$boundary_color,
