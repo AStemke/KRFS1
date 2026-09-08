@@ -203,8 +203,16 @@ config <- list(
       C18 = 9
     ),
 
+    # Distanzmodus fuer Selektiv_Gesamt:
+    # "specific_or_default" nutzt einen spezifischen Grenzwert, wenn vorhanden,
+    # und sonst near_care_default_km. "default_only" nutzt fuer alle Entitaeten
+    # der selektiven Gesamtgruppe ausschliesslich near_care_default_km.
+    # Einzel-ICD-Auswertungen nutzen unabhaengig davon immer spezifische
+    # Grenzwerte, sofern sie in near_care_km_by_icd hinterlegt sind.
+    near_care_selective_mode = "specific_or_default",
+
     # Rueckwaertskompatibler Alias fuer Skripte, die nur einen Wert anzeigen.
-    near_care_km = 25,
+    near_care_km = 9,
 
     distance_breaks_km = c(-Inf, 10, 25, 50, 100, Inf),
     distance_labels = c("<10 km", "10-<25 km", "25-<50 km", "50-<100 km", ">=100 km")
