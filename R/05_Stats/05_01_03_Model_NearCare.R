@@ -13,6 +13,7 @@
 required_model_vars <- c(
   "LNGTUMORID",
   "distance_km",
+  "near_care",
   "sex",
   "age_at_diag",
   "uicc",
@@ -49,7 +50,7 @@ model_dat <- tumor_base |>
     !is.na(diagnosis_year)
   ) |>
   dplyr::mutate(
-    near_care_num = as.integer(distance_km <= config$analysis$near_care_km),
+    near_care_num = as.integer(near_care),
     sex = as.factor(sex),
     uicc = as.factor(uicc),
     icd10_3 = as.factor(icd10_3),
