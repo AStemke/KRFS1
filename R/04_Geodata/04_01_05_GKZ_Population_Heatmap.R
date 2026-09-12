@@ -332,3 +332,189 @@ if (is.na(population_path)) {
     output_category = "aggregate_table",
     threshold = FALSE
   )
+
+  # Kartenbasis -----------------------------
+  ## Dieselbe Geometrie wie die Near-Care-Karte --------------------------
+  if (
+    exists("gkz_geo_stuttgart_base") &&
+      inherits(gkz_geo_stuttgart_base, "sf")
+  ) {
+    population_geo_base <- gkz_geo_stuttgart_base
+  } else {
+    configured_gkz_key <- config$geodata$gkz_key_sf
+    gkz_key_candidates <- unique(
+      c(configured_gkz_key, "gemeinde_i", "GKZ", "gkz", "AGS", "ags")
+    )
+    gkz_sf_key <- gkz_key_candidates[
+      gkz_key_candidates %in% names(gkz_geo)
+    ][1L]
+
+    if (length(gkz_sf_key) == 0L || is.na(gkz_sf_key)) {
+      stop(
+        "In gkz_geo wurde keine geeignete GKZ-Variable gefunden.",
+        call. = FALSE
+      )
+    }
+
+    population_geo_base <- gkz_geo |>
+      sf::st_transform(crs = config$geodata$crs_target) |>
+      dplyr::mutate(
+        gkz_join = kr_normalize_gkz(.data[[gkz_sf_key]])
+      ) |>
+      dplyr::filter(
+        !is.na(gkz_join),
+        startsWith(gkz_join, map_prefix)
+      )
+  }
+
+  population_geo <- if (
+    exists("gkz_geo_stuttgart") &&
+      inherits(gkz_geo_stuttgart, "sf")
+  ) {
+    gkz_geo_stuttgart
+  } else {
+    population_geo_base |>
+      dplyr::mutate(
+        map_key = substr(
+          gkz_join,
+          start = 1L,
+          stop = map_gkz_digits
+        )
+      ) |>
+      dplyr::group_by(map_key) |>
+      dplyr::summarise(.groups = "drop") |>
+      sf::st_simplify(
+        dTolerance = heatmap_config$simplify_tolerance_m,
+        preserveTopology = TRUE
+      )
+  }
+
+  population_map <- population_geo |>
+    dplyr::left_join(
+      population_tab,
+      by = "map_key"
+    )
+
+  population_not_mapped <- population_tab |>
+    dplyr::anti_join(
+      population_geo |>
+        sf::st_drop_geometry() |>
+        dplyr::distinct(map_key),
+      by = "map_key"
+    )
+
+  ctx <- tc_write_table(
+    tab = population_not_mapped,
+    table_id = "04_05_population_not_mapped",
+    ctx = ctx,
+    output_category = "technical_overview",
+    threshold = FALSE
+  )
+
+  # Orientierungspunkte -----------------------------
+  ## Zentren wie Selektiv_Gesamt --------------------------
+  population_city_points <- if (
+    exists("city_points") &&
+      inherits(city_points, "sf")
+  ) {
+    city_points
+  } else {
+    population_geo_base |>
+      dplyr::inner_join(
+        heatmap_config$cities |>
+          dplyr::mutate(
+            gkz_join = kr_normalize_gkz(gkz_join)
+          ),
+        by = "gkz_join"
+      ) |>
+      dplyr::select(
+        city_label,
+        geometry
+      ) |>
+      sf::st_point_on_surface()
+  }
+
+  # Heatmap -----------------------------
+  ## Abbildung --------------------------
+  population_reference_label <- if (
+    grepl("2023", basename(population_path))
+  ) {
+    "31.12.2023"
+  } else {
+    "laut Quelldatei"
+  }
+
+  p_population_stuttgart <- ggplot2::ggplot(
+    population_map
+  ) +
+    ggplot2::geom_sf(
+      ggplot2::aes(fill = population),
+      color = heatmap_config$boundary_color,
+      linewidth = map_linewidth
+    ) +
+    ggplot2::geom_sf(
+      data = population_city_points,
+      shape = 21,
+      size = heatmap_config$city_point_size,
+      stroke = heatmap_config$city_point_stroke,
+      color = "black",
+      fill = "white",
+      inherit.aes = FALSE
+    ) +
+    ggplot2::geom_sf_text(
+      data = population_city_points,
+      ggplot2::aes(label = city_label),
+      nudge_y = heatmap_config$city_label_nudge_y_stuttgart,
+      size = heatmap_config$city_label_size,
+      fontface = "bold",
+      color = "black",
+      check_overlap = FALSE,
+      inherit.aes = FALSE
+    ) +
+    ggplot2::coord_sf(datum = NA) +
+    ggplot2::scale_fill_viridis_c(
+      option = "C",
+      labels = scales::label_number(
+        accuracy = 1,
+        big.mark = ".",
+        decimal.mark = ","
+      ),
+      na.value = "grey90",
+      name = "Einwohner"
+    ) +
+    ggplot2::labs(
+      title = paste0(
+        "Einwohnerzahl nach Gemeinde | ",
+        kr_analysis_region_label()
+      ),
+      subtitle = paste0(
+        "Wohn-GKZ ",
+        map_prefix,
+        " | achtstellige GKZ-Ebene | Stand ",
+        population_reference_label
+      ),
+      caption = paste0(
+        "Quelle: ",
+        basename(population_path)
+      )
+    ) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(
+      axis.title = ggplot2::element_blank(),
+      axis.text = ggplot2::element_blank(),
+      axis.ticks = ggplot2::element_blank(),
+      panel.grid = ggplot2::element_blank(),
+      plot.title = ggplot2::element_text(face = "bold"),
+      legend.title = ggplot2::element_text(face = "bold")
+    )
+
+  ctx <- tc_write_figure(
+    plot = p_population_stuttgart,
+    fig_id = "04_05_gkz_population_heatmap",
+    filename = "population_stuttgart_0811_gkz8",
+    ctx = ctx,
+    threshold_tab = population_tab,
+    output_category = "aggregate_figure",
+    threshold = FALSE
+  )
+}
