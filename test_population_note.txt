@@ -1,2 +1,0 @@
-# Population map
-x <- readRDS(file.path(config$paths$current_wd, "output", "Gesamt", "Prepare", "rds", "tumor_base.rds"))
