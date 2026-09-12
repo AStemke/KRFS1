@@ -62,3 +62,94 @@ if (length(population_files) > 0L) {
 } else {
   population_path <- NA_character_
 }
+
+# Hilfsfunktionen -----------------------------
+## Import und Spaltenerkennung --------------------------
+kr_population_clean_name <- function(x) {
+  x <- iconv(x, from = "", to = "ASCII//TRANSLIT")
+  x <- tolower(x)
+  gsub("[^a-z0-9]+", "_", x)
+}
+
+kr_population_read_excel <- function(path) {
+  sheets <- readxl::excel_sheets(path)
+
+  for (sheet in sheets) {
+    preview <- suppressMessages(
+      readxl::read_excel(
+        path,
+        sheet = sheet,
+        col_names = FALSE,
+        n_max = 50,
+        .name_repair = "minimal"
+      )
+    )
+
+    if (nrow(preview) == 0L) {
+      next
+    }
+
+    row_text <- apply(
+      preview,
+      1L,
+      function(x) paste(as.character(x), collapse = " ")
+    )
+
+    header_rows <- which(
+      grepl(
+        "gs.*schl|gemeinde.*schl|ags|gkz",
+        row_text,
+        ignore.case = TRUE
+      ) &
+        grepl(
+          "bevoelker|einwohner|population",
+          row_text,
+          ignore.case = TRUE
+        )
+    )
+
+    if (length(header_rows) > 0L) {
+      return(
+        suppressMessages(
+          readxl::read_excel(
+            path,
+            sheet = sheet,
+            skip = header_rows[1L] - 1L,
+            .name_repair = "unique"
+          )
+        )
+      )
+    }
+  }
+
+  suppressMessages(
+    readxl::read_excel(
+      path,
+      sheet = sheets[1L],
+      .name_repair = "unique"
+    )
+  )
+}
+
+kr_population_read_csv <- function(path) {
+  first_line <- readLines(
+    path,
+    n = 1L,
+    warn = FALSE,
+    encoding = "UTF-8"
+  )
+
+  n_semicolon <- stringr::str_count(first_line, ";")
+  n_comma <- stringr::str_count(first_line, ",")
+  delimiter <- if (n_semicolon >= n_comma) ";" else ","
+
+  suppressMessages(
+    readr::read_delim(
+      path,
+      delim = delimiter,
+      show_col_types = FALSE,
+      trim_ws = TRUE,
+      name_repair = "unique"
+    )
+  )
+}
