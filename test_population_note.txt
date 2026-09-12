@@ -1,2 +1,2 @@
 # Population map
-x <- 1
+source("x.R", local = FALSE)
