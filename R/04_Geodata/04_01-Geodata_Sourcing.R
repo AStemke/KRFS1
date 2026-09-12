@@ -1,8 +1,6 @@
-# 04_01-Geodata_Sourcing.R -----------------------------
+# Geodaten-Sourcing -----------------------------
 ## Zweck --------------------------
 # Erstellt die Geodaten-Auswertungen fuer die aktive ICD-10-Kohorte.
-# Tabellen und Gebietsdiagramme werden auch ohne Geometrien erzeugt;
-# ausschliesslich die Karten werden bei fehlenden Geodaten uebersprungen.
 
 # Datenbasis -----------------------------
 ## Aktive Kohorte --------------------------
@@ -88,6 +86,17 @@ if (
       local = FALSE
     )
   }
+}
+
+## Einwohnerkarte --------------------------
+if (
+  identical(config$analysis$active_output_group, "Selektiv_Gesamt") &&
+    "stuttgart" %in% config$geodata$heatmap$active_maps
+) {
+  source(
+    file.path(geodata_dir, "04_01_05_GKZ_Population_Heatmap.R"),
+    local = FALSE
+  )
 }
 
 # Ergebnisse -----------------------------
