@@ -1,1 +1,2 @@
-Population map placeholder.
+# Population map
+x <- 1
